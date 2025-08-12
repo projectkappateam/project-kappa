@@ -1,0 +1,31 @@
+[gd_scene load_steps=4 format=3 uid="uid://dfnvqrioyjxqu"]
+
+[ext_resource type="Script" uid="uid://dehdwybiokkgt" path="res://scripts/player.gd" id="1_3vyb7"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3vyb7"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_u8vuu"]
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_3vyb7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_3vyb7")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_u8vuu")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="GunMount" type="Node3D" parent="Camera3D"]
+
+[node name="ShootingRaycast" type="RayCast3D" parent="Camera3D"]
+enabled = false
+target_position = Vector3(0, 0, -50)
+
+[node name="RayCast3D" type="RayCast3D" parent="."]
+target_position = Vector3(0, 1.2, 0)
+
+[node name="ReloadTimer" type="Timer" parent="."]
+one_shot = true

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GunData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/GunData.gd" id="1_gun_data"]
+
+[resource]
+script = ExtResource("1_gun_data")
+gun_name = "Carbon-2"
+category = "Pistol"
+cost = 0
+damage = 18.0
+fire_rate = 6.0
+weight = 0.5
+mag_size = 12
+total_ammo = 48
+reload_time = 1.2
+recoil_climb = 0.015

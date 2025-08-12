@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GunData" load_steps=2 format=3 uid="uid://blar4b2t3x1fr"]
+
+[ext_resource type="Script" uid="uid://8ol131mvfvyw" path="res://scripts/GunData.gd" id="1_gun_data"]
+
+[resource]
+script = ExtResource("1_gun_data")
+gun_name = "Buzzsaw-40"
+category = "SMG"
+cost = 1500
+damage = 22.0
+fire_rate = 9.0
+weight = 1.3
+mag_size = 25
+total_ammo = 75
+reload_time = 1.7
+recoil_climb = 0.015

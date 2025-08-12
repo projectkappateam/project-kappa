@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GunData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/GunData.gd" id="1_gun_data"]
+
+[resource]
+script = ExtResource("1_gun_data")
+gun_name = "Ravager-67"
+category = "Assault Rifle"
+cost = 2400
+damage = 35.0
+fire_rate = 7.0  # Slower fire rate for higher damage
+weight = 2.4
+mag_size = 25
+total_ammo = 75
+reload_time = 2.8
+recoil_climb = 0.03

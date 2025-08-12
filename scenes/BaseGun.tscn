@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://btxpteloxb82g"]
+
+[ext_resource type="Script" uid="uid://bb6dljnjylmeq" path="res://scripts/BaseGun.gd" id="1_bd41w"]
+
+[node name="BaseGun" type="Node3D"]
+script = ExtResource("1_bd41w")

@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://byo7jr5g6qy1m"]
+
+[ext_resource type="Script" path="res://scripts/Bullet.gd" id="1_mkf8s"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h1aey"]
+metallic = 0.82
+roughness = 0.35
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_mkf8s"]
+material = SubResource("StandardMaterial3D_h1aey")
+radius = 0.02
+height = 0.1
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_y25gk"]
+radius = 0.02
+height = 0.1
+
+[node name="Bullet" type="Area3D"]
+script = ExtResource("1_mkf8s")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_mkf8s")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_y25gk")
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 2.0
+one_shot = true

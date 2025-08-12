@@ -1,0 +1,84 @@
+[gd_scene load_steps=2 format=3 uid="uid://cgcgsrrofpyd4"]
+
+[ext_resource type="Script" uid="uid://bvwcje77plu6v" path="res://scripts/BuyMenu.gd" id="1_8ovgt"]
+
+[node name="BuyMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8ovgt")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Header" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+alignment = 1
+
+[node name="TimerLabel" type="Label" parent="MarginContainer/VBoxContainer/Header/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "00:20"
+horizontal_alignment = 1
+
+[node name="TabContainer" type="TabContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Pistols" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="PistolGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/TabContainer/Pistols"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 3
+
+[node name="SMGs" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="SMGGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/TabContainer/SMGs"]
+layout_mode = 2
+columns = 3
+
+[node name="Assault Rifles" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="ARGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/TabContainer/Assault Rifles"]
+layout_mode = 2
+columns = 3
+
+[node name="Timer" type="Timer" parent="."]
+one_shot = true

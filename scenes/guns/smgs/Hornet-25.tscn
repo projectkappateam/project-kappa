@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://c3pxp8ehm1ywq"]
+
+[ext_resource type="PackedScene" uid="uid://btxpteloxb82g" path="res://scenes/BaseGun.tscn" id="1_8iwx3"]
+[ext_resource type="Resource" path="res://resources/guns/smgs/Hornet-25.tres" id="2_8fosx"]
+[ext_resource type="PackedScene" uid="uid://boxye6le20c3u" path="res://scenes/guns/smgs/assets/Hornet-25.glb" id="3_8fosx"]
+
+[node name="Hornet-25" instance=ExtResource("1_8iwx3")]
+gun_data = ExtResource("2_8fosx")
+
+[node name="Hornet-25" parent="." index="0" instance=ExtResource("3_8fosx")]
+transform = Transform3D(-1.70272e-08, 0.0908917, -0.389536, 3.973e-09, 0.389536, 0.0908917, 0.4, -6.76135e-16, -1.74846e-08, 0.157, -0.328, -0.518)
+
+[node name="BulletSpawnPoint" type="Marker3D" parent="Hornet-25" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.978826, 0.202509, -0.0204399)

@@ -1,0 +1,43 @@
+[gd_scene load_steps=8 format=3 uid="uid://ijekaiechsfp"]
+
+[ext_resource type="PackedScene" uid="uid://dfnvqrioyjxqu" path="res://scenes/player.tscn" id="1_nnsk1"]
+[ext_resource type="PackedScene" uid="uid://cgcgsrrofpyd4" path="res://scenes/BuyMenu.tscn" id="2_rwgxs"]
+[ext_resource type="PackedScene" uid="uid://der2fnidgfals" path="res://scenes/HUD.tscn" id="3_4wyf3"]
+[ext_resource type="PackedScene" uid="uid://byo7jr5g6qy1m" path="res://scenes/bullet.tscn" id="4_k0juu"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_e5uuo"]
+size = Vector3(50, 1, 50)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_e5uuo"]
+size = Vector3(50, 1, 50)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rwgxs"]
+size = Vector3(1, 2, 1)
+
+[node name="The World" type="Node3D"]
+
+[node name="World" type="StaticBody3D" parent="."]
+
+[node name="Ground" type="MeshInstance3D" parent="World"]
+mesh = SubResource("BoxMesh_e5uuo")
+skeleton = NodePath("../..")
+
+[node name="GroundCollision" type="CollisionShape3D" parent="World"]
+shape = SubResource("BoxShape3D_e5uuo")
+
+[node name="Player" parent="World" instance=ExtResource("1_nnsk1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7862, 9.50329, 9.75268)
+buy_menu_scene = ExtResource("2_rwgxs")
+hud_scene = ExtResource("3_4wyf3")
+bullet_scene = ExtResource("4_k0juu")
+
+[node name="TestBox" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.50496, 0)
+mesh = SubResource("BoxMesh_rwgxs")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 22, 0)
+light_energy = 16.0
+light_indirect_energy = 6.479
+light_volumetric_fog_energy = 6.156
+omni_range = 61.0243

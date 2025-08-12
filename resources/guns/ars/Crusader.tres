@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GunData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/GunData.gd" id="1_gun_data"]
+
+[resource]
+script = ExtResource("1_gun_data")
+gun_name = "Crusader"
+category = "Assault Rifle"
+cost = 2400
+damage = 32.0
+fire_rate = 7.5
+weight = 2.2
+mag_size = 30
+total_ammo = 90
+reload_time = 2.6
+recoil_climb = 0.028

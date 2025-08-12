@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://c0io6jm25h1qd"]
+
+[ext_resource type="PackedScene" uid="uid://btxpteloxb82g" path="res://scenes/BaseGun.tscn" id="1_h682d"]
+[ext_resource type="Resource" uid="uid://blar4b2t3x1fr" path="res://resources/guns/smgs/Buzzsaw-40.tres" id="2_xnobl"]
+[ext_resource type="PackedScene" uid="uid://c0u47vaifr2yt" path="res://scenes/guns/smgs/assets/Buzzsaw-40.glb" id="3_xnobl"]
+
+[node name="Buzzsaw-40" instance=ExtResource("1_h682d")]
+gun_data = ExtResource("2_xnobl")
+
+[node name="Buzzsaw-40" parent="." index="0" instance=ExtResource("3_xnobl")]
+transform = Transform3D(-1.71998e-08, 0.0718986, -0.393485, 3.1428e-09, 0.393485, 0.0718986, 0.4, 0, -1.74846e-08, 0.157, -0.328, -0.518)
+
+[node name="BulletSpawnPoint" type="Marker3D" parent="Buzzsaw-40" index="1"]
+transform = Transform3D(1, 0, -3.55271e-15, 0, 1, 0, 3.55271e-15, 0, 1, -0.978826, 0.0840894, 2.98023e-08)

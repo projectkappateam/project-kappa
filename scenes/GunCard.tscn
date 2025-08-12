@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://8dk7w1t8ub8k"]
+
+[node name="GunCard" type="PanelContainer"]
+custom_minimum_size = Vector2(200, 150)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+alignment = 1
+
+[node name="GunNameLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Gun Name"
+horizontal_alignment = 1
+
+[node name="CostLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "$1000"
+horizontal_alignment = 1
+
+[node name="BuyButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Buy"

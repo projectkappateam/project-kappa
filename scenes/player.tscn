@@ -29,3 +29,7 @@ target_position = Vector3(0, 1.2, 0)
 
 [node name="ReloadTimer" type="Timer" parent="."]
 one_shot = true
+
+[node name="BuyPhaseTimer" type="Timer" parent="."]
+wait_time = 25.0
+one_shot = true

@@ -51,10 +51,6 @@ var current_mag_ammo: int = 0
 var current_reserve_ammo: int = 0
 var is_reloading: bool = false
 
-# --- FIXED & POPULATED GUN MAP ---
-# This dictionary maps a gun's name to its 3D scene file.
-# Make sure the paths here exactly match your file system.
-# You still need to create the .tscn files for the guns listed below.
 var gun_scene_map = {
 	# Pistols
 	"Brat-10": "res://scenes/guns/pistols/Brat-10.tscn",
@@ -70,7 +66,8 @@ var gun_scene_map = {
 	# Assault Rifles
 	"Blackout": "res://scenes/guns/ars/Blackout.tscn",
 	"Crusader": "res://scenes/guns/ars/Crusader.tscn",
-	"Cyclone": "res://scenes/guns/ars/Cyclone.tscn"
+	"Cyclone": "res://scenes/guns/ars/Cyclone.tscn",
+	"Ravager-67": "res://scenes/guns/ars/Ravager-67.tscn"
 }
 
 
@@ -106,7 +103,6 @@ func _unhandled_input(event):
 
 
 func _physics_process(delta):
-	# (No changes in this function, it remains the same)
 	self.rotation.y = _target_yaw
 	camera.rotation.x = _target_pitch
 
@@ -128,10 +124,20 @@ func _physics_process(delta):
 		velocity.y -= gravity * delta
 	if Input.is_action_just_pressed("jump") and is_on_floor() and not is_crouching:
 		velocity.y = JUMP_VELOCITY
+
+	# --- MODIFIED SHOOTING LOGIC ---
 	if fire_cooldown > 0:
 		fire_cooldown -= delta
-	if current_gun_data and fire_cooldown <= 0 and Input.is_action_pressed("shoot"):
-		shoot()
+
+	if current_gun_data:
+		# Check which fire mode the current gun has
+		match current_gun_data.fire_mode:
+			"Automatic":
+				if Input.is_action_pressed("shoot") and fire_cooldown <= 0:
+					shoot()
+			"Semi-Auto", "Bolt-Action":
+				if Input.is_action_just_pressed("shoot") and fire_cooldown <= 0:
+					shoot()
 
 	var base_speed = STAND_SPEED if not is_crouching else CROUCH_SPEED
 	if current_gun_data:
@@ -164,17 +170,17 @@ func _on_gun_purchased(gun_data: GunData):
 			# Set up ammo based on the purchased gun's data
 			current_mag_ammo = current_gun_data.mag_size
 			current_reserve_ammo = current_gun_data.total_ammo
+			is_reloading = false # Ensure reloading state is reset
+			fire_cooldown = 0 # Ensure fire cooldown is reset
 			ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
 	else:
 		print("ERROR: No scene path found in gun_scene_map for gun: ", gun_data.gun_name)
 
 
-# (The rest of the functions: shoot, reload, _on_reload_finished, set_crouch_state remain the same)
-
 func shoot():
 	if is_reloading: return
 	if current_mag_ammo <= 0:
-		reload()
+		reload() # Or play an empty click sound
 		return
 
 	current_mag_ammo -= 1

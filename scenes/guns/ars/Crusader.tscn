@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://bnvl3o3vvq7hi"]
+
+[ext_resource type="PackedScene" uid="uid://btxpteloxb82g" path="res://scenes/BaseGun.tscn" id="1_okvdx"]
+[ext_resource type="Resource" path="res://resources/guns/ars/Crusader.tres" id="2_okvdx"]
+[ext_resource type="PackedScene" uid="uid://6ahsmrp1cyt1" path="res://scenes/guns/ars/assets/Blackout.glb" id="3_tghqx"]
+
+[node name="Crusader" instance=ExtResource("1_okvdx")]
+gun_data = ExtResource("2_okvdx")
+
+[node name="Crusader" parent="." index="0" instance=ExtResource("3_tghqx")]
+transform = Transform3D(-1.74846e-08, 0.0694593, -0.393923, 0, 0.393923, 0.0694593, 0.4, 3.03616e-09, -1.72189e-08, 0.2, -0.328, -0.726)
+
+[node name="BulletSpawnPoint" type="Marker3D" parent="Crusader" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.978826, 0.0609212, -0.0204399)

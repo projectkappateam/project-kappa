@@ -1,7 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://bt3edgacmbv2j"]
+[gd_scene load_steps=4 format=3 uid="uid://5bps5ims7cf3"]
 
 [ext_resource type="PackedScene" uid="uid://btxpteloxb82g" path="res://scenes/BaseGun.tscn" id="1_6wbvh"]
 [ext_resource type="Resource" path="res://resources/guns/ars/Ravager-67.tres" id="2_ex7ji"]
+[ext_resource type="PackedScene" uid="uid://6ahsmrp1cyt1" path="res://scenes/guns/ars/assets/Blackout.glb" id="3_40xwl"]
 
 [node name="Ravager-67" instance=ExtResource("1_6wbvh")]
 gun_data = ExtResource("2_ex7ji")
+
+[node name="Ravager-67" parent="." index="0" instance=ExtResource("3_40xwl")]
+transform = Transform3D(-1.74846e-08, 0.0694593, -0.393923, 0, 0.393923, 0.0694593, 0.4, 3.03616e-09, -1.72189e-08, 0.2, -0.328, -0.726)
+
+[node name="BulletSpawnPoint" type="Marker3D" parent="Ravager-67" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.978826, 0.0609212, -0.0204399)

@@ -1,12 +1,13 @@
-[gd_resource type="Resource" script_class="GunData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="GunData" load_steps=2 format=3 uid="uid://d1hgavhv4eshk"]
 
-[ext_resource type="Script" path="res://scripts/GunData.gd" id="1_gun_data"]
+[ext_resource type="Script" uid="uid://8ol131mvfvyw" path="res://scripts/GunData.gd" id="1_gun_data"]
 
 [resource]
 script = ExtResource("1_gun_data")
 gun_name = "Duster-6X"
 category = "Pistol"
 cost = 400
+fire_mode = "Semi-Auto"
 damage = 50.0
 fire_rate = 2.0
 weight = 0.8

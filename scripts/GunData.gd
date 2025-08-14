@@ -5,6 +5,11 @@ extends Resource
 @export var gun_name: String = "Gun"
 @export_enum("Pistol", "SMG", "Assault Rifle") var category: String = "Pistol"
 @export var cost: int = 0
+
+# --- NEW ---
+# Add a fire mode selector for each gun
+@export_enum("Automatic", "Semi-Auto", "Bolt-Action") var fire_mode: String = "Automatic"
+
 @export var damage: float = 10.0
 @export var fire_rate: float = 5.0 # Shots per second
 @export var weight: float = 1.0

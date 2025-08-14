@@ -14,8 +14,8 @@ const STAND_SPEED = 5.0
 const CROUCH_SPEED = 2.0
 const JUMP_VELOCITY = 4.5
 const MOUSE_SENSITIVITY = 0.002
-const STAND_CAMERA_POS_Y = 1.9
-const CROUCH_CAMERA_POS_Y = 1.1
+const STAND_CAMERA_POS_Y = 0.0 # Adjusted for bone attachment
+const CROUCH_CAMERA_POS_Y = -0.4 # Adjusted for bone attachment
 const STAND_COLLIDER_HEIGHT = 2.0
 const CROUCH_COLLIDER_HEIGHT = 1.2
 const CROUCH_LERP_SPEED = 10.0
@@ -35,13 +35,15 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var bullet_scene: PackedScene
 
 # --- OnReady Node References ---
-@onready var camera = $Camera3D
-@onready var collision_shape = $CollisionShape3D
-@onready var mesh = $MeshInstance3D
+@onready var collision_shape = $CollisionShape3DHead
 @onready var head_check_raycast = $RayCast3D
-@onready var gun_mount = $Camera3D/GunMount
 @onready var reload_timer = $ReloadTimer
 @onready var buy_phase_timer = $BuyPhaseTimer
+@onready var camera = $HeadAttachment/Camera3D
+@onready var gun_mount = $GunAttachment/GunMount
+@onready var head_attachment = $HeadAttachment
+@onready var gun_attachment = $GunAttachment
+@onready var model = $Model
 
 # --- State Variables ---
 var is_crouching = false
@@ -86,7 +88,17 @@ var gun_scene_map = {
 
 
 func _ready():
-	camera.position.y = STAND_CAMERA_POS_Y
+	# Wait one frame for the model's skeleton to be ready before configuring it
+	await get_tree().process_frame
+	var skeleton = model.find_child("Skeleton3D", true, false)
+	if skeleton:
+		head_attachment.skeleton = skeleton.get_path()
+		head_attachment.bone_name = "Head" # <-- CHANGE THIS if your head bone is named differently
+		gun_attachment.skeleton = skeleton.get_path()
+		gun_attachment.bone_name = "hand.R" # <-- CHANGE THIS if your hand bone is named differently
+	else:
+		printerr("Player model's Skeleton3D not found!")
+
 	reload_timer.timeout.connect(_on_reload_finished)
 	_target_yaw = self.rotation.y
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -138,25 +150,27 @@ func _unhandled_input(event):
 
 
 func _physics_process(delta):
-	if is_buy_phase:
+	if is_buy_phase and is_instance_valid(hud):
 		hud.update_buy_prompt(buy_phase_timer.time_left)
 
 	self.rotation.y = _target_yaw
 	camera.rotation.x = _target_pitch
 
+	# --- CROUCHING & COLLIDER LOGIC ---
 	var crouch_delta = delta * CROUCH_LERP_SPEED
-	var target_cam_y = STAND_CAMERA_POS_Y if not is_crouching else CROUCH_CAMERA_POS_Y
 	var target_collider_h = STAND_COLLIDER_HEIGHT if not is_crouching else CROUCH_COLLIDER_HEIGHT
 	collision_shape.shape.height = lerp(collision_shape.shape.height, target_collider_h, crouch_delta)
 	collision_shape.position.y = lerp(collision_shape.position.y, target_collider_h / 2.0, crouch_delta)
-	mesh.mesh.height = lerp(mesh.mesh.height, target_collider_h, crouch_delta)
-	mesh.position.y = lerp(mesh.position.y, target_collider_h / 2.0, crouch_delta)
+
+	# --- HEAD BOB (APPLIED TO CAMERA'S PARENT ATTACHMENT) ---
+	var target_cam_y = STAND_CAMERA_POS_Y if not is_crouching else CROUCH_CAMERA_POS_Y
 	var is_moving = is_on_floor() and velocity.length() > 0.1
 	if is_moving:
 		bob_time += delta * velocity.length() * BOB_FREQUENCY
 		var bob_offset = sin(bob_time) * BOB_AMPLITUDE
 		target_cam_y += bob_offset
-	camera.position.y = lerp(camera.position.y, target_cam_y, crouch_delta)
+	head_attachment.position.y = lerp(head_attachment.position.y, target_cam_y, crouch_delta)
+
 
 	if not is_on_floor():
 		velocity.y -= gravity * delta

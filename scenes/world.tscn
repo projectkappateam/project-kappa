@@ -41,3 +41,4 @@ light_energy = 16.0
 light_indirect_energy = 6.479
 light_volumetric_fog_energy = 6.156
 omni_range = 61.0243
+omni_attenuation = 0.85

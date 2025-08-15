@@ -45,58 +45,61 @@ func refresh_display():
 
 
 func populate_guns():
-	# Define where to find gun resources and which grid to put them in
-	var gun_folders = {
-		"Pistol": "res://resources/guns/pistols",
-		"SMG": "res://resources/guns/smgs",
-		"Assault Rifle": "res://resources/guns/ars"
-	}
-
+	# Define where to find the grid for each category
 	var grids = {
 		"Pistol": pistol_grid,
 		"SMG": smg_grid,
 		"Assault Rifle": ar_grid
 	}
 
-	# Loop through each category to find and display guns
-	for category in gun_folders:
-		var path = gun_folders[category]
-		var grid = grids[category]
-		var dir = DirAccess.open(path)
-		if dir:
-			dir.list_dir_begin()
-			var file_name = dir.get_next()
-			while file_name != "":
-				if file_name.ends_with(".tres"):
-					var gun_data = load(path.path_join(file_name))
-					if gun_data:
-						# Create a visual card for the gun
-						var card = GUN_CARD_SCENE.instantiate()
-						card.get_node("VBoxContainer/GunNameLabel").text = gun_data.gun_name
-						card.get_node("VBoxContainer/CostLabel").text = "$%d" % gun_data.cost
+	# Statically load all gun data resources. This ensures they are included in the export.
+	var all_gun_data = [
+		# Pistols
+		load("res://resources/guns/pistols/Brat-10.tres"),
+		load("res://resources/guns/pistols/Carbon-2.tres"),
+		load("res://resources/guns/pistols/Duster-6X.tres"),
+		load("res://resources/guns/pistols/Shiv.tres"),
+		# SMGs
+		load("res://resources/guns/smgs/Buzzsaw-40.tres"),
+		load("res://resources/guns/smgs/Hornet-25.tres"),
+		# Assault Rifles
+		load("res://resources/guns/ars/Blackout.tres"),
+		load("res://resources/guns/ars/Crusader.tres"),
+		load("res://resources/guns/ars/Cyclone.tres"),
+		load("res://resources/guns/ars/Ravager-67.tres")
+	]
 
-						var button = card.get_node("VBoxContainer/BuyButton")
+	# Loop through the preloaded gun data to populate the menu
+	for gun_data in all_gun_data:
+		# Ensure the resource loaded correctly and has a valid category
+		if gun_data and gun_data.category in grids:
+			var grid = grids[gun_data.category]
 
-						var is_owned = gun_data in player_ref.gun_inventory
-						var has_empty_slot = null in player_ref.gun_inventory
+			# Create a visual card for the gun
+			var card = GUN_CARD_SCENE.instantiate()
+			card.get_node("VBoxContainer/GunNameLabel").text = gun_data.gun_name
+			card.get_node("VBoxContainer/CostLabel").text = "$%d" % gun_data.cost
 
-						if is_owned:
-							button.text = "Sell"
-							button.pressed.connect(func(): _on_gun_sell_pressed(gun_data))
+			var button = card.get_node("VBoxContainer/BuyButton")
+			var is_owned = gun_data in player_ref.gun_inventory
+			var has_empty_slot = null in player_ref.gun_inventory
 
-							# Prevent selling the last gun
-							var owned_gun_count = player_ref.gun_inventory.filter(func(g): return g != null).size()
-							if owned_gun_count <= 1:
-								button.disabled = true
-						else:
-							button.text = "Buy"
-							button.pressed.connect(func(): _on_gun_buy_pressed(gun_data))
+			if is_owned:
+				button.text = "Sell"
+				button.pressed.connect(func(): _on_gun_sell_pressed(gun_data))
 
-							if player_ref.cash < gun_data.cost or not has_empty_slot:
-								button.disabled = true
+				# Prevent selling the last gun
+				var owned_gun_count = player_ref.gun_inventory.filter(func(g): return g != null).size()
+				if owned_gun_count <= 1:
+					button.disabled = true
+			else:
+				button.text = "Buy"
+				button.pressed.connect(func(): _on_gun_buy_pressed(gun_data))
 
-						grid.add_child(card)
-				file_name = dir.get_next()
+				if player_ref.cash < gun_data.cost or not has_empty_slot:
+					button.disabled = true
+
+			grid.add_child(card)
 
 
 func _on_gun_buy_pressed(gun_data: GunData):

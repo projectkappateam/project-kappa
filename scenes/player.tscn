@@ -5,11 +5,11 @@
 [ext_resource type="PackedScene" uid="uid://il6pfjix02bv" path="res://scenes/DeathScreen.tscn" id="2_qhqgy"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_g2els"]
-size = Vector3(0.286087, 0.164482, 0.562866)
+size = Vector3(0.692426, 0.333549, 0.562866)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.136283
-height = 1.93395
+height = 1.66369
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_3vyb7")
@@ -46,13 +46,13 @@ wait_time = 25.0
 one_shot = true
 
 [node name="CollisionShapeTorso" type="CollisionShape3D" parent="."]
-transform = Transform3D(0.721721, 0, 0, 0, 3.26001, 0, 0, 0, 0.316528, 0.00286447, 0.384717, 0.00353959)
+transform = Transform3D(0.721721, 0, 0, 0, 3.26001, 0, 0, 0, 0.316528, 0.00237752, 0.585455, 0.00353959)
 shape = SubResource("BoxShape3D_g2els")
 
 [node name="CollisionShapeChest" type="CollisionShape3D" parent="."]
-transform = Transform3D(0.721721, 0, 0, 0, 3.26001, 0, 0, 0, 0.316528, 0.0176489, 0.927899, 0.00353959)
+transform = Transform3D(0.721721, 0, 0, 0, 3.26001, 0, 0, 0, 0.316528, 0.0176489, 1.34966, 0.00353959)
 shape = SubResource("BoxShape3D_g2els")
 
 [node name="CollisionShape3DHead" type="CollisionShape3D" parent="."]
-transform = Transform3D(0.721721, 0, 0, 0, 0.416066, 0, 0, 0, 0.316528, -0.00561354, 1.05233, 0.00353959)
+transform = Transform3D(0.721721, 0, 0, 0, 0.416066, 0, 0, 0, 0.316528, -0.00561354, 2.08774, 0.00353959)
 shape = SubResource("CapsuleShape3D_g2els")

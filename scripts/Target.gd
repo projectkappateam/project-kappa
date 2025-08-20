@@ -25,6 +25,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var gun_node: Node3D = null
 var gun_data: GunData = null
 var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
+# V V V THIS LINE DETERMINES THE GUN V V V
 const GUN_SCENE_PATH = "res://scenes/guns/ars/Crusader.tscn" # Hardcoded assault rifle
 
 # --- Targetting ---

@@ -31,7 +31,7 @@ target_position = Vector3(0, 0, -50)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 2.02473, -0.3)
 
 [node name="ADSCameraPosition" type="Camera3D" parent="GunAttachment/GunMount"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0999999, -0.172674)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.160979, -0.0424111, -0.172674)
 
 [node name="RayCast3D" type="RayCast3D" parent="."]
 target_position = Vector3(0, 1.2, 0)

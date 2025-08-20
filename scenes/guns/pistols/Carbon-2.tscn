@@ -1,14 +1,14 @@
 [gd_scene load_steps=4 format=3 uid="uid://wfcwe0i8gfqu"]
 
 [ext_resource type="PackedScene" uid="uid://btxpteloxb82g" path="res://scenes/BaseGun.tscn" id="1_r1roi"]
-[ext_resource type="Resource" path="res://resources/guns/pistols/Carbon-2.tres" id="2_g32r5"]
+[ext_resource type="Resource" uid="uid://ownaslwajphe" path="res://resources/guns/pistols/Carbon-2.tres" id="2_g32r5"]
 [ext_resource type="PackedScene" uid="uid://bg31mst35bbmu" path="res://scenes/guns/pistols/assets/Carbon-2.glb" id="3_g32r5"]
 
 [node name="Carbon-2" instance=ExtResource("1_r1roi")]
 gun_data = ExtResource("2_g32r5")
 
 [node name="Carbon-2" parent="." index="0" instance=ExtResource("3_g32r5")]
-transform = Transform3D(-8.56464e-09, 0.040113, -0.195936, 1.7534e-09, 0.195936, 0.040113, 0.2, 0, -8.74228e-09, 0.157, -0.328, -0.65)
+transform = Transform3D(-8.74228e-09, 0, -0.2, 0, 0.2, 0, 0.2, 0, -8.74227e-09, 0.157, -0.328, -0.65)
 
 [node name="BulletSpawnPoint" type="Marker3D" parent="Carbon-2" index="1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.04785, 0.522994, 4.58028e-08)

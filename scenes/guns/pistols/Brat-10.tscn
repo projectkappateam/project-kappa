@@ -8,7 +8,7 @@
 gun_data = ExtResource("2_ywjrm")
 
 [node name="Brat-10" parent="." index="0" instance=ExtResource("3_ywjrm")]
-transform = Transform3D(-8.74228e-08, 0.504139, 1.93542, 0, 1.93542, -0.504139, -2, -2.20366e-08, -8.45998e-08, 0.157, -0.277, -0.65)
+transform = Transform3D(-8.74228e-08, 0, 2, 0, 2, 0, -2, 0, -8.74228e-08, 0.157, -0.277, -0.65)
 
 [node name="BulletSpawnPoint" type="Marker3D" parent="Brat-10" index="1"]
 transform = Transform3D(1, -1.77636e-15, 1.42109e-14, 7.10543e-15, 0.999999, 4.66073e-16, 2.84217e-14, 4.66073e-16, 0.999999, 0.130143, 0.0229203, -0.00010711)

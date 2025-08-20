@@ -1,14 +1,14 @@
 [gd_scene load_steps=4 format=3 uid="uid://cnklb1o2mnmbj"]
 
 [ext_resource type="PackedScene" uid="uid://btxpteloxb82g" path="res://scenes/BaseGun.tscn" id="1_anpfs"]
-[ext_resource type="Resource" path="res://resources/guns/pistols/Duster-6X.tres" id="2_yvgtl"]
+[ext_resource type="Resource" uid="uid://d1hgavhv4eshk" path="res://resources/guns/pistols/Duster-6X.tres" id="2_yvgtl"]
 [ext_resource type="PackedScene" uid="uid://vfnintyec6eg" path="res://scenes/guns/pistols/assets/Duster-6X.glb" id="3_uucgw"]
 
 [node name="Duster-6X" instance=ExtResource("1_anpfs")]
 gun_data = ExtResource("2_yvgtl")
 
 [node name="Duster-6X" parent="." index="0" instance=ExtResource("3_uucgw")]
-transform = Transform3D(-8.41843e-09, 0.0539319, -0.192591, 2.35744e-09, 0.192591, 0.0539319, 0.2, 0, -8.74228e-09, 0.157, -0.328, -0.65)
+transform = Transform3D(-8.74228e-09, 0, -0.2, 0, 0.2, 0, 0.2, 0, -8.74227e-09, 0.157, -0.328, -0.65)
 
 [node name="BulletSpawnPoint" type="Marker3D" parent="Duster-6X" index="1"]
 transform = Transform3D(1, 0, -2.13163e-14, 0, 1, 0, 2.13163e-14, 0, 1, -0.957306, 0.218106, -0.00946039)

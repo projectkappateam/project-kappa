@@ -8,7 +8,7 @@
 gun_data = ExtResource("2_xnobl")
 
 [node name="Buzzsaw-40" parent="." index="0" instance=ExtResource("3_xnobl")]
-transform = Transform3D(-1.71998e-08, 0.0718986, -0.393485, 3.1428e-09, 0.393485, 0.0718986, 0.4, 0, -1.74846e-08, 0.157, -0.328, -0.518)
+transform = Transform3D(-1.74846e-08, 0, -0.4, 0, 0.4, 0, 0.4, 0, -1.74845e-08, 0.157, -0.328, -0.518)
 
 [node name="BulletSpawnPoint" type="Marker3D" parent="Buzzsaw-40" index="1"]
 transform = Transform3D(1, 0, -3.55271e-15, 0, 1, 0, 3.55271e-15, 0, 1, -0.978826, 0.0840894, 2.98023e-08)

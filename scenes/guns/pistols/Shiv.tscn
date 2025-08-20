@@ -1,14 +1,14 @@
 [gd_scene load_steps=4 format=3 uid="uid://c3su038slglor"]
 
 [ext_resource type="PackedScene" uid="uid://btxpteloxb82g" path="res://scenes/BaseGun.tscn" id="1_xlseb"]
-[ext_resource type="Resource" path="res://resources/guns/pistols/Shiv.tres" id="2_vwgay"]
+[ext_resource type="Resource" uid="uid://cii7ntca70gfq" path="res://resources/guns/pistols/Shiv.tres" id="2_vwgay"]
 [ext_resource type="PackedScene" uid="uid://bicbnditpwa05" path="res://scenes/guns/pistols/assets/Shiv.glb" id="3_vwgay"]
 
 [node name="Shiv" instance=ExtResource("1_xlseb")]
 gun_data = ExtResource("2_vwgay")
 
 [node name="Shiv" parent="." index="0" instance=ExtResource("3_vwgay")]
-transform = Transform3D(-8.74228e-08, 0.504139, 1.93542, 0, 1.93542, -0.504139, -2, -2.20366e-08, -8.45998e-08, 0.157, -0.277469, -0.65)
+transform = Transform3D(-8.74228e-08, 0, 2, 0, 2, 0, -2, 0, -8.74228e-08, 0.157, -0.277469, -0.65)
 
 [node name="BulletSpawnPoint" type="Marker3D" parent="Shiv" index="1"]
 transform = Transform3D(1, -1.77636e-15, 0, 1.15463e-14, 0.999999, 1.49012e-08, 3.90799e-14, -1.49012e-08, 0.999999, 0.277937, 0.0100168, 0.000672832)

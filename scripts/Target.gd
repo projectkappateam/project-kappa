@@ -4,7 +4,8 @@ extends CharacterBody3D
 # --- Stats ---
 var health: float = 150.0
 const MAX_HEALTH: float = 150.0
-const SPEED: float = 3.0
+const SPEED: float = 1.5
+@export var can_shoot: bool = true # NEW: Exported variable to control shooting
 
 # --- Movement ---
 @export var move_range: float = 10.0 # How far it moves from its start point
@@ -25,7 +26,6 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var gun_node: Node3D = null
 var gun_data: GunData = null
 var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
-# V V V THIS LINE DETERMINES THE GUN V V V
 const GUN_SCENE_PATH = "res://scenes/guns/ars/Crusader.tscn" # Hardcoded assault rifle
 
 # --- Targetting ---
@@ -51,7 +51,10 @@ func _ready():
 
 	# Equip gun and connect shoot timer
 	_equip_gun()
-	shoot_timer.timeout.connect(shoot)
+
+	# CHANGED: Only connect the shoot timer if shooting is enabled
+	if can_shoot:
+		shoot_timer.timeout.connect(shoot)
 
 func _physics_process(delta):
 	# Gravity
@@ -104,9 +107,12 @@ func shoot():
 
 
 func take_damage(damage_amount: float):
+	print("HIT: Target '%s' took %.1f damage." % [self.name, damage_amount])
 	health -= damage_amount
+	print("HEALTH: Target '%s' has %.1f HP remaining." % [self.name, health])
 	if health <= 0:
 		die()
 
 func die():
+	print("DEATH: Target '%s' has been eliminated." % self.name)
 	queue_free()

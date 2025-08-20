@@ -1,9 +1,11 @@
-# player.gd
+# scripts/player.gd
 extends CharacterBody3D
 
 # --- Signals ---
 signal ammo_updated(current_ammo, reserve_ammo)
 signal cash_updated(new_cash_amount)
+signal health_updated(new_health) # NEW
+signal player_died # NEW
 
 # --- Constants ---
 const PRIMARY_SLOT = 0
@@ -11,6 +13,8 @@ const SECONDARY_SLOT = 1
 const ADS_DURATION = 0.1
 
 # --- Player Stats ---
+var health: float = 150.0 # NEW
+const MAX_HEALTH: float = 150.0 # NEW
 const STAND_SPEED = 5.0
 const CROUCH_SPEED = 2.0
 const JUMP_VELOCITY = 4.5
@@ -34,6 +38,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var buy_menu_scene: PackedScene
 @export var hud_scene: PackedScene
 @export var bullet_scene: PackedScene
+@export var death_screen_scene: PackedScene # NEW
 
 # --- OnReady Node References ---
 @onready var collision_shape = $CollisionShape3DHead
@@ -52,6 +57,7 @@ var is_crouching = false
 var hud: CanvasLayer
 var initial_camera_transform: Transform3D
 var ads_tween: Tween
+var is_dead: bool = false # NEW
 
 # --- Decoupled Aim Variables ---
 var _target_yaw: float = 0.0
@@ -112,6 +118,7 @@ func _ready():
 		add_child(hud)
 		self.ammo_updated.connect(hud.update_ammo_display)
 		self.cash_updated.connect(hud.update_cash_display)
+		self.health_updated.connect(hud.update_health_display) # NEW
 
 	# Setup and start the buy phase
 	buy_phase_timer.wait_time = BUY_PHASE_DURATION
@@ -125,6 +132,7 @@ func _ready():
 	_equip_gun(free_pistol_data, SECONDARY_SLOT, true)
 	cash = 9000 # Set initial cash after getting the free pistol
 	cash_updated.emit(cash)
+	health_updated.emit(health) # NEW
 
 
 func _unhandled_input(event):
@@ -396,3 +404,30 @@ func set_crouch_state(new_state: bool):
 	if new_state == false and head_check_raycast.is_colliding():
 		return
 	is_crouching = new_state
+
+# --- NEW FUNCTIONS ---
+func take_damage(damage_amount: float):
+	if is_dead: return
+	health -= damage_amount
+	health_updated.emit(health)
+	if health <= 0:
+		die()
+
+func die():
+	if is_dead: return
+	is_dead = true
+	player_died.emit()
+
+	# Disable player logic
+	set_physics_process(false)
+	set_process_unhandled_input(false)
+
+	# Show death screen
+	if death_screen_scene:
+		var death_screen = death_screen_scene.instantiate()
+		add_child(death_screen)
+
+	# Release mouse and hide HUD
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	if is_instance_valid(hud):
+		hud.hide()

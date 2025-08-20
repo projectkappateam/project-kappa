@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://ijekaiechsfp"]
+[gd_scene load_steps=9 format=3 uid="uid://ijekaiechsfp"]
 
 [ext_resource type="PackedScene" uid="uid://dfnvqrioyjxqu" path="res://scenes/player.tscn" id="1_nnsk1"]
 [ext_resource type="PackedScene" uid="uid://cgcgsrrofpyd4" path="res://scenes/BuyMenu.tscn" id="2_rwgxs"]
 [ext_resource type="PackedScene" uid="uid://der2fnidgfals" path="res://scenes/HUD.tscn" id="3_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://byo7jr5g6qy1m" path="res://scenes/bullet.tscn" id="4_k0juu"]
+[ext_resource type="PackedScene" uid="uid://b4jrciuu56lus" path="res://scenes/Target.tscn" id="5_71j4m"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_e5uuo"]
 size = Vector3(50, 1, 50)
@@ -42,3 +43,12 @@ light_indirect_energy = 6.479
 light_volumetric_fog_energy = 6.156
 omni_range = 61.0243
 omni_attenuation = 0.85
+
+[node name="Target" parent="." instance=ExtResource("5_71j4m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6394, 0.502407, 8.44224)
+
+[node name="Target2" parent="." instance=ExtResource("5_71j4m")]
+transform = Transform3D(0.82106, 0, 0.570843, 0, 1, 0, -0.570843, 0, 0.82106, 12.0565, 0.502407, 11.9746)
+
+[node name="Target3" parent="." instance=ExtResource("5_71j4m")]
+transform = Transform3D(-0.986005, 0, 0.166717, 0, 1, 0, -0.166717, 0, -0.986005, 14.4442, 0.502407, -8.59094)

@@ -1,8 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://dfnvqrioyjxqu"]
+[gd_scene load_steps=5 format=3 uid="uid://b4jrciuu56lus"]
 
-[ext_resource type="Script" uid="uid://dehdwybiokkgt" path="res://scripts/player.gd" id="1_3vyb7"]
-[ext_resource type="PackedScene" uid="uid://daisyh88gqg4c" path="res://assets/player_character.blend" id="2_model"]
-[ext_resource type="PackedScene" uid="uid://il6pfjix02bv" path="res://scenes/DeathScreen.tscn" id="2_qhqgy"]
+[ext_resource type="Script" uid="uid://dibfccv3ceepc" path="res://scripts/Target.gd" id="1_ligy1"]
+[ext_resource type="PackedScene" uid="uid://daisyh88gqg4c" path="res://assets/player_character.blend" id="2_3xmu0"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_g2els"]
 size = Vector3(0.286087, 0.164482, 0.562866)
@@ -11,38 +10,23 @@ size = Vector3(0.286087, 0.164482, 0.562866)
 radius = 0.136283
 height = 1.93395
 
-[node name="Player" type="CharacterBody3D"]
-script = ExtResource("1_3vyb7")
-death_screen_scene = ExtResource("2_qhqgy")
+[node name="Target" type="CharacterBody3D"]
+script = ExtResource("1_ligy1")
 
-[node name="Model" parent="." instance=ExtResource("2_model")]
+[node name="Model" parent="." instance=ExtResource("2_3xmu0")]
 transform = Transform3D(-0.5, 0, -4.37114e-08, 0, 0.5, 0, 4.37114e-08, 0, -0.5, 0, 0, 0)
 
 [node name="HeadAttachment" type="BoneAttachment3D" parent="."]
-
-[node name="Camera3D" type="Camera3D" parent="HeadAttachment"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2324, -0.0403034)
-
-[node name="ShootingRaycast" type="RayCast3D" parent="HeadAttachment/Camera3D"]
-enabled = false
-target_position = Vector3(0, 0, -50)
 
 [node name="GunAttachment" type="BoneAttachment3D" parent="."]
 
 [node name="GunMount" type="Node3D" parent="GunAttachment"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 2.02473, -0.3)
 
-[node name="ADSCameraPosition" type="Camera3D" parent="GunAttachment/GunMount"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.160979, -0.0424111, -0.172674)
-
 [node name="RayCast3D" type="RayCast3D" parent="."]
 target_position = Vector3(0, 1.2, 0)
 
 [node name="ReloadTimer" type="Timer" parent="."]
-one_shot = true
-
-[node name="BuyPhaseTimer" type="Timer" parent="."]
-wait_time = 25.0
 one_shot = true
 
 [node name="CollisionShapeTorso" type="CollisionShape3D" parent="."]
@@ -56,3 +40,6 @@ shape = SubResource("BoxShape3D_g2els")
 [node name="CollisionShape3DHead" type="CollisionShape3D" parent="."]
 transform = Transform3D(0.721721, 0, 0, 0, 0.416066, 0, 0, 0, 0.316528, -0.00561354, 1.05233, 0.00353959)
 shape = SubResource("CapsuleShape3D_g2els")
+
+[node name="ShootTimer" type="Timer" parent="."]
+autostart = true

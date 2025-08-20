@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://il6pfjix02bv"]
+
+[ext_resource type="Script" uid="uid://dfxtg7aevxvcb" path="res://scripts/DeathScreen.gd" id="1_biyii"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_q8x7y"]
+font_size = 64
+
+[node name="DeathScreen" type="CanvasLayer"]
+script = ExtResource("1_biyii")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.705882)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="CenterContainer"]
+layout_mode = 2
+text = "You DIED"
+label_settings = SubResource("LabelSettings_q8x7y")

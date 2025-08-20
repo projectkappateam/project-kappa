@@ -8,6 +8,7 @@ signal cash_updated(new_cash_amount)
 # --- Constants ---
 const PRIMARY_SLOT = 0
 const SECONDARY_SLOT = 1
+const ADS_DURATION = 0.1
 
 # --- Player Stats ---
 const STAND_SPEED = 5.0
@@ -25,9 +26,6 @@ const BUY_PHASE_DURATION = 25.0
 const BOB_FREQUENCY = 0.0
 const BOB_AMPLITUDE = 0.00
 var bob_time = 0.0
-
-# Not sure why this would be here so I set the bob to 0 like every other tac-shooter :wink:
-# If we for some reason want head vertical mvt we should probably only do it on 3d model animations (but we probably shouldn't).
 
 # --- Physics ---
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -47,10 +45,13 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var head_attachment = $HeadAttachment
 @onready var gun_attachment = $GunAttachment
 @onready var model = $Model
+@onready var ads_camera_position = $GunAttachment/GunMount/ADSCameraPosition
 
 # --- State Variables ---
 var is_crouching = false
-var hud: Control
+var hud: CanvasLayer
+var initial_camera_transform: Transform3D
+var ads_tween: Tween
 
 # --- Decoupled Aim Variables ---
 var _target_yaw: float = 0.0
@@ -64,7 +65,6 @@ var fire_cooldown = 0.0
 var current_mag_ammo: int = 0
 var current_reserve_ammo: int = 0
 var is_reloading: bool = false
-var is_aiming: bool = false
 
 # --- Economy and Buy Phase ---
 var cash: int = 9000
@@ -118,6 +118,8 @@ func _ready():
 	buy_phase_timer.timeout.connect(_on_buy_phase_ended)
 	buy_phase_timer.start()
 
+	initial_camera_transform = camera.transform
+
 	# Equip a free starting pistol
 	var free_pistol_data = load("res://resources/guns/pistols/Carbon-2.tres")
 	_equip_gun(free_pistol_data, SECONDARY_SLOT, true)
@@ -138,9 +140,9 @@ func _unhandled_input(event):
 		reload()
 
 	if Input.is_action_just_pressed("aim"):
-		set_aim_state(true)
+		_toggle_ads(true)
 	if Input.is_action_just_released("aim"):
-		set_aim_state(false)
+		_toggle_ads(false)
 
 	if Input.is_action_just_pressed("open_buy_menu") and is_buy_phase:
 		toggle_buy_menu()
@@ -165,7 +167,6 @@ func _physics_process(delta):
 	self.rotation.y = _target_yaw
 	camera.rotation.x = _target_pitch
 
-	_handle_ads(delta)
 
 	# --- CROUCHING & COLLIDER LOGIC ---
 	var crouch_delta = delta * CROUCH_LERP_SPEED
@@ -213,6 +214,24 @@ func _physics_process(delta):
 		velocity.x = move_toward(velocity.x, 0, base_speed)
 		velocity.z = move_toward(velocity.z, 0, base_speed)
 	move_and_slide()
+
+
+func _toggle_ads(is_aiming: bool):
+	if ads_tween and ads_tween.is_running():
+		ads_tween.kill()
+
+	ads_tween = create_tween()
+	ads_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+
+	var target_transform: Transform3D
+
+	if is_aiming and not is_reloading:
+		# Calculate the target local transform relative to the head attachment
+		target_transform = head_attachment.global_transform.affine_inverse() * ads_camera_position.global_transform
+	else:
+		target_transform = initial_camera_transform
+
+	ads_tween.tween_property(camera, "transform", target_transform, ADS_DURATION)
 
 
 func toggle_buy_menu():
@@ -302,6 +321,8 @@ func switch_gun(new_index: int):
 	if new_index == active_gun_index or not is_instance_valid(gun_inventory[new_index]):
 		return
 
+	_toggle_ads(false) # Exit ADS when switching guns
+
 	if is_instance_valid(gun_nodes[active_gun_index]):
 		gun_nodes[active_gun_index].hide()
 
@@ -347,7 +368,8 @@ func shoot():
 	bullet_instance.damage = current_gun_data.damage
 	get_tree().root.add_child(bullet_instance)
 
-	var new_transform = Transform3D(camera.global_transform.basis, spawn_point.global_position)
+	var active_camera = get_viewport().get_camera_3d()
+	var new_transform = Transform3D(active_camera.global_transform.basis, spawn_point.global_position)
 	bullet_instance.global_transform = new_transform
 
 func reload():
@@ -355,7 +377,7 @@ func reload():
 	if not current_gun_data or is_reloading or current_reserve_ammo <= 0 or current_mag_ammo == current_gun_data.mag_size:
 		return
 	is_reloading = true
-	set_aim_state(false) # Exit ADS when reloading
+	_toggle_ads(false) # Exit ADS when reloading
 	reload_timer.wait_time = current_gun_data.reload_time
 	reload_timer.start()
 
@@ -374,31 +396,3 @@ func set_crouch_state(new_state: bool):
 	if new_state == false and head_check_raycast.is_colliding():
 		return
 	is_crouching = new_state
-
-func set_aim_state(new_state: bool):
-	if is_reloading:
-		is_aiming = false
-		return
-	is_aiming = new_state
-
-func _handle_ads(delta):
-	var current_gun_node = gun_nodes[active_gun_index]
-	var current_gun_data = gun_inventory[active_gun_index]
-
-	if not is_instance_valid(current_gun_node) or not is_instance_valid(current_gun_data):
-		return
-
-	var target_pos = Vector3.ZERO
-	var target_fov = 75.0 # Default FOV
-	var ads_speed = 10.0
-
-	if is_aiming:
-		target_pos = current_gun_node.ads_position
-		target_fov /= current_gun_data.ads_zoom
-		ads_speed = current_gun_data.ads_speed
-
-	# Interpolate gun position
-	current_gun_node.position = current_gun_node.position.lerp(target_pos, delta * ads_speed)
-
-	# Interpolate camera FOV
-	camera.fov = lerp(camera.fov, target_fov, delta * ads_speed)

@@ -19,7 +19,3 @@ extends Resource
 @export var reload_time: float = 1.5 # in seconds
 
 @export var recoil_climb: float = 0.01
-
-# --- ADS Properties ---
-@export var ads_speed: float = 10.0
-@export var ads_zoom: float = 1.2

@@ -1,5 +1,5 @@
 # HUD.gd
-extends Control
+extends CanvasLayer
 
 # Get references to our new labels
 @onready var current_ammo_label = $PanelContainer/HBoxContainer/CurrentAmmoLabel

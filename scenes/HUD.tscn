@@ -3,14 +3,7 @@
 [ext_resource type="Script" uid="uid://dps688jkng1o4" path="res://scripts/HUD.gd" id="1_fls4u"]
 [ext_resource type="Texture2D" uid="uid://4jdlo3tat2pr" path="res://assets/crosshair.png" id="1_qpvh6"]
 
-[node name="HUD" type="Control"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
+[node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_fls4u")
 
 [node name="TextureRect" type="TextureRect" parent="."]

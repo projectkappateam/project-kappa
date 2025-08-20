@@ -64,6 +64,7 @@ var fire_cooldown = 0.0
 var current_mag_ammo: int = 0
 var current_reserve_ammo: int = 0
 var is_reloading: bool = false
+var is_aiming: bool = false
 
 # --- Economy and Buy Phase ---
 var cash: int = 9000
@@ -136,6 +137,11 @@ func _unhandled_input(event):
 	if Input.is_action_just_pressed("reload"):
 		reload()
 
+	if Input.is_action_just_pressed("aim"):
+		set_aim_state(true)
+	if Input.is_action_just_released("aim"):
+		set_aim_state(false)
+
 	if Input.is_action_just_pressed("open_buy_menu") and is_buy_phase:
 		toggle_buy_menu()
 
@@ -158,6 +164,8 @@ func _physics_process(delta):
 
 	self.rotation.y = _target_yaw
 	camera.rotation.x = _target_pitch
+
+	_handle_ads(delta)
 
 	# --- CROUCHING & COLLIDER LOGIC ---
 	var crouch_delta = delta * CROUCH_LERP_SPEED
@@ -347,6 +355,7 @@ func reload():
 	if not current_gun_data or is_reloading or current_reserve_ammo <= 0 or current_mag_ammo == current_gun_data.mag_size:
 		return
 	is_reloading = true
+	set_aim_state(false) # Exit ADS when reloading
 	reload_timer.wait_time = current_gun_data.reload_time
 	reload_timer.start()
 
@@ -365,3 +374,31 @@ func set_crouch_state(new_state: bool):
 	if new_state == false and head_check_raycast.is_colliding():
 		return
 	is_crouching = new_state
+
+func set_aim_state(new_state: bool):
+	if is_reloading:
+		is_aiming = false
+		return
+	is_aiming = new_state
+
+func _handle_ads(delta):
+	var current_gun_node = gun_nodes[active_gun_index]
+	var current_gun_data = gun_inventory[active_gun_index]
+
+	if not is_instance_valid(current_gun_node) or not is_instance_valid(current_gun_data):
+		return
+
+	var target_pos = Vector3.ZERO
+	var target_fov = 75.0 # Default FOV
+	var ads_speed = 10.0
+
+	if is_aiming:
+		target_pos = current_gun_node.ads_position
+		target_fov /= current_gun_data.ads_zoom
+		ads_speed = current_gun_data.ads_speed
+
+	# Interpolate gun position
+	current_gun_node.position = current_gun_node.position.lerp(target_pos, delta * ads_speed)
+
+	# Interpolate camera FOV
+	camera.fov = lerp(camera.fov, target_fov, delta * ads_speed)

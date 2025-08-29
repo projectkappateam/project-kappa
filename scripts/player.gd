@@ -5,7 +5,7 @@ extends CharacterBody3D
 signal ammo_updated(current_ammo, reserve_ammo)
 signal cash_updated(new_cash_amount)
 signal health_updated(new_health)
-signal armor_updated(new_armor) # Added for the new armor system
+signal armor_updated(new_armor)
 signal player_died
 
 # --- Constants ---
@@ -15,7 +15,7 @@ const ADS_DURATION = 0.1
 
 # --- Player Stats ---
 var health: float = 150.0
-var armor: int = 0 # Added armor stat
+var armor: int = 0
 const MAX_HEALTH: float = 150.0
 const STAND_SPEED = 5.0
 const CROUCH_SPEED = 2.0
@@ -23,8 +23,6 @@ const JUMP_VELOCITY = 4.5
 const MOUSE_SENSITIVITY = 0.002
 const STAND_CAMERA_POS_Y = 0.0
 const CROUCH_CAMERA_POS_Y = -0.4
-const STAND_COLLIDER_HEIGHT = 2.0
-const CROUCH_COLLIDER_HEIGHT = 1.2
 const CROUCH_LERP_SPEED = 10.0
 const BUY_PHASE_DURATION = 25.0
 
@@ -43,11 +41,12 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var death_screen_scene: PackedScene
 
 # --- OnReady Node References ---
-@onready var collision_shape = $CollisionShape3DHead
+@onready var collision_shape = $CollisionShape3D
 @onready var head_check_raycast = $RayCast3D
 @onready var reload_timer = $ReloadTimer
 @onready var buy_phase_timer = $BuyPhaseTimer
 @onready var camera = $HeadAttachment/Camera3D
+@onready var shooting_raycast = $HeadAttachment/Camera3D/ShootingRaycast
 @onready var gun_mount = $GunAttachment/GunMount
 @onready var head_attachment = $HeadAttachment
 @onready var gun_attachment = $GunAttachment
@@ -100,7 +99,6 @@ var gun_scene_map = {
 
 
 func _ready():
-	# Wait one frame for the model's skeleton to be ready before configuring it
 	await get_tree().process_frame
 	var skeleton = model.find_child("Skeleton3D", true, false)
 	if skeleton:
@@ -121,22 +119,20 @@ func _ready():
 		self.ammo_updated.connect(hud.update_ammo_display)
 		self.cash_updated.connect(hud.update_cash_display)
 		self.health_updated.connect(hud.update_health_display)
-		self.armor_updated.connect(hud.update_armor_display) # Connect the new armor signal
+		self.armor_updated.connect(hud.update_armor_display)
 
-	# Setup and start the buy phase
 	buy_phase_timer.wait_time = BUY_PHASE_DURATION
 	buy_phase_timer.timeout.connect(_on_buy_phase_ended)
 	buy_phase_timer.start()
 
 	initial_camera_transform = camera.transform
 
-	# Equip a free starting pistol
 	var free_pistol_data = load("res://resources/guns/pistols/Carbon-2.tres")
 	_equip_gun(free_pistol_data, SECONDARY_SLOT, true)
-	cash = 9000 # Set initial cash after getting the free pistol
+	cash = 9000
 	cash_updated.emit(cash)
 	health_updated.emit(health)
-	armor_updated.emit(armor) # Emit initial armor value
+	armor_updated.emit(armor)
 
 
 func _unhandled_input(event):
@@ -159,7 +155,6 @@ func _unhandled_input(event):
 	if Input.is_action_just_pressed("open_buy_menu") and is_buy_phase:
 		toggle_buy_menu()
 
-	# --- WEAPON SWITCHING ---
 	if Input.is_action_just_pressed("switch_primary"):
 		switch_gun(PRIMARY_SLOT)
 	if Input.is_action_just_pressed("switch_secondary"):
@@ -178,21 +173,15 @@ func _physics_process(delta):
 	self.rotation.y = _target_yaw
 	camera.rotation.x = _target_pitch
 
-	# --- CROUCHING & COLLIDER LOGIC ---
 	var crouch_delta = delta * CROUCH_LERP_SPEED
-	var target_collider_h = STAND_COLLIDER_HEIGHT if not is_crouching else CROUCH_COLLIDER_HEIGHT
-	collision_shape.shape.height = lerp(collision_shape.shape.height, target_collider_h, crouch_delta)
-	collision_shape.position.y = lerp(collision_shape.position.y, target_collider_h / 2.0, crouch_delta)
-
-	# --- HEAD BOB (APPLIED TO CAMERA'S PARENT ATTACHMENT) ---
 	var target_cam_y = STAND_CAMERA_POS_Y if not is_crouching else CROUCH_CAMERA_POS_Y
+
 	var is_moving = is_on_floor() and velocity.length() > 0.1
 	if is_moving:
 		bob_time += delta * velocity.length() * BOB_FREQUENCY
 		var bob_offset = sin(bob_time) * BOB_AMPLITUDE
 		target_cam_y += bob_offset
 	head_attachment.position.y = lerp(head_attachment.position.y, target_cam_y, crouch_delta)
-
 
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -234,9 +223,7 @@ func _toggle_ads(is_aiming: bool):
 	ads_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
 
 	var target_transform: Transform3D
-
 	if is_aiming and not is_reloading:
-		# Calculate the target local transform relative to the head attachment
 		target_transform = head_attachment.global_transform.affine_inverse() * ads_camera_position.global_transform
 	else:
 		target_transform = initial_camera_transform
@@ -253,7 +240,7 @@ func toggle_buy_menu():
 			buy_menu_instance.player_ref = self
 			buy_menu_instance.gun_purchased.connect(_on_gun_purchased)
 			buy_menu_instance.gun_sold.connect(_on_gun_sold)
-			buy_menu_instance.shield_purchased.connect(_on_shield_purchased) # Connect shield purchase signal
+			buy_menu_instance.shield_purchased.connect(_on_shield_purchased)
 			add_child(buy_menu_instance)
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
@@ -273,11 +260,8 @@ func _on_gun_purchased(gun_data: GunData):
 	if is_instance_valid(current_gun_in_slot):
 		refund = current_gun_in_slot.cost
 
-	if cash + refund < gun_data.cost:
-		print("Not enough cash to buy ", gun_data.gun_name)
-		return
+	if cash + refund < gun_data.cost: return
 
-	# Process transaction
 	cash += refund
 	cash -= gun_data.cost
 	cash_updated.emit(cash)
@@ -307,7 +291,6 @@ func _on_gun_sold(gun_data: GunData):
 	if is_instance_valid(buy_menu_instance):
 		buy_menu_instance.refresh_display()
 
-# Added function to handle shield purchases from the buy menu
 func _on_shield_purchased(shield_data):
 	if cash >= shield_data.cost and armor < shield_data.armor_amount:
 		cash -= shield_data.cost
@@ -362,6 +345,7 @@ func _update_active_gun_stats(gun_data: GunData):
 	fire_cooldown = 0
 	ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
 
+
 func shoot():
 	if is_reloading: return
 	var current_gun_data = gun_inventory[active_gun_index]
@@ -378,19 +362,36 @@ func shoot():
 	_target_pitch += current_gun_data.recoil_climb
 	_target_pitch = clamp(_target_pitch, deg_to_rad(-90.0), deg_to_rad(90.0))
 
+	shooting_raycast.force_raycast_update()
+	if shooting_raycast.is_colliding():
+		var collider = shooting_raycast.get_collider()
+		if collider.has_method("take_damage"):
+			collider.take_damage(current_gun_data.damage)
+
 	if not bullet_scene: return
 	var current_gun_node = gun_nodes[active_gun_index]
 	if not is_instance_valid(current_gun_node): return
 	var spawn_point = current_gun_node.find_child("BulletSpawnPoint", true, false)
-	if not spawn_point: return
+	if not is_instance_valid(spawn_point): return
 
 	var bullet_instance = bullet_scene.instantiate()
-	bullet_instance.damage = current_gun_data.damage
 	get_tree().root.add_child(bullet_instance)
 
-	var active_camera = get_viewport().get_camera_3d()
-	var new_transform = Transform3D(active_camera.global_transform.basis, spawn_point.global_position)
-	bullet_instance.global_transform = new_transform
+	var start_pos = spawn_point.global_position
+	var target_pos
+	if shooting_raycast.is_colliding():
+		target_pos = shooting_raycast.get_collision_point()
+	else:
+		# --- THIS IS THE FIX ---
+		# The old code used .get_target_position(), which is a LOCAL coordinate.
+		# We need to convert that local point into a GLOBAL world coordinate.
+		# The .to_global() function does this conversion for us, ensuring the tracer
+		# always flies towards the correct point in the world, even when we don't hit anything.
+		target_pos = shooting_raycast.to_global(shooting_raycast.target_position)
+
+	# Tell the bullet to fly between these two points.
+	bullet_instance.fly_to(start_pos, target_pos)
+
 
 func reload():
 	var current_gun_data = gun_inventory[active_gun_index]
@@ -417,27 +418,17 @@ func set_crouch_state(new_state: bool):
 		return
 	is_crouching = new_state
 
-# --- MODIFIED FUNCTION ---
-# This is the new damage function with armor logic and debugging prints.
 func take_damage(damage_amount: float):
 	if is_dead: return
-
-	# --- ADDED FOR DEBUGGING ---
-	print("--- Player taking damage ---")
-	print("Initial Health: ", health, " | Initial Armor: ", armor)
-	print("Incoming Damage: ", damage_amount)
-	# --- END OF DEBUGGING CODE ---
 
 	var damage_to_health = damage_amount
 	var damage_to_armor = 0.0
 
 	if armor > 0:
-		# Armor absorbs 33% of the damage
 		var absorbed_damage = damage_amount * 0.33
 		damage_to_health = damage_amount - absorbed_damage
 		damage_to_armor = absorbed_damage
 
-		# If armor can't absorb all of its share, the rest goes to health
 		if damage_to_armor > armor:
 			var overflow = damage_to_armor - armor
 			damage_to_health += overflow
@@ -445,19 +436,8 @@ func take_damage(damage_amount: float):
 
 		armor -= int(damage_to_armor)
 
-	# --- ADDED FOR DEBUGGING ---
-	print("Damage applied to armor: ", damage_to_armor)
-	print("Damage applied to health: ", damage_to_health)
-	# --- END OF DEBUGGING CODE ---
-
 	health -= damage_to_health
 
-	# --- ADDED FOR DEBUGGING ---
-	print("Final Health: ", health, " | Final Armor: ", armor)
-	print("--------------------------")
-	# --- END OF DEBUGGING CODE ---
-
-	# Update HUD
 	health_updated.emit(health)
 	armor_updated.emit(armor)
 

@@ -1,33 +1,25 @@
 # scripts/Bullet.gd
 extends Area3D
 
-var speed = 75.0
-var damage = 10.0 # This will be overwritten by the gun that fires it
+# This script now handles a purely cosmetic tracer effect.
+# It has no physics or collision logic of its own. Hit detection is handled
+# instantly by the shooter's raycast.
 
-@onready var timer = $Timer
+# This function is called by the shooter (e.g., the player) to fire the tracer.
+func fly_to(start_position: Vector3, target_position: Vector3):
+	# Set the starting position and aim the bullet model at the target.
+	global_position = start_position
+	look_at(target_position)
 
-func _ready():
-	# Connect signals for lifetime and hit detection
-	timer.timeout.connect(queue_free)
-	body_entered.connect(_on_body_entered)
-	timer.start()
+	# We'll calculate the duration of the flight based on distance to simulate
+	# a constant speed. This makes tracers look more realistic over all ranges.
+	var distance = start_position.distance_to(target_position)
+	var tracer_speed = 150.0 # A good, fast speed for a visual effect.
+	var duration = distance / tracer_speed
 
-func _physics_process(delta):
-	# Move the bullet forward based on its own local Z-axis.
-	# The firing entity will set this node's rotation when it's fired.
-	position += -transform.basis.z * speed * delta
-
-func _on_body_entered(body):
-	# --- ADDED FOR DEBUGGING ---
-	# This line prints the name of the physics body the bullet collided with.
-	# We expect to see "Player" or "Target" here. If we don't, there might be a collision layer issue.
-	print("Bullet hit: ", body.name)
-	# --- END OF DEBUGGING CODE ---
-
-	# Check if the body we hit can take damage
-	if body.has_method("take_damage"):
-		body.take_damage(damage)
-
-	# Destroy the bullet on impact with any non-bullet physics body
-	if not body is Area3D:
-		queue_free()
+	# Create a tween to handle the movement. A tween animates a property over time.
+	var tween = create_tween()
+	# Tell the tween to animate our 'global_position' property to the target position over the calculated duration.
+	tween.tween_property(self, "global_position", target_position, duration)
+	# Once the tween animation is finished, tell it to call the queue_free method, which destroys the bullet.
+	tween.tween_callback(queue_free)

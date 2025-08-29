@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=2 format=3 uid="uid://jnyfbjh00cam"]
+
+[ext_resource type="Script" uid="uid://boslhfmsisk4t" path="res://scripts/ShieldData.gd" id="1_2qlfi"]
+
+[resource]
+script = ExtResource("1_2qlfi")
+shield_name = "Light Shield"
+cost = 400
+armor_amount = 25
+metadata/_custom_type_script = "uid://boslhfmsisk4t"

@@ -4,8 +4,9 @@ extends CharacterBody3D
 # --- Signals ---
 signal ammo_updated(current_ammo, reserve_ammo)
 signal cash_updated(new_cash_amount)
-signal health_updated(new_health) # NEW
-signal player_died # NEW
+signal health_updated(new_health)
+signal armor_updated(new_armor) # Added for the new armor system
+signal player_died
 
 # --- Constants ---
 const PRIMARY_SLOT = 0
@@ -13,14 +14,15 @@ const SECONDARY_SLOT = 1
 const ADS_DURATION = 0.1
 
 # --- Player Stats ---
-var health: float = 150.0 # NEW
-const MAX_HEALTH: float = 150.0 # NEW
+var health: float = 150.0
+var armor: int = 0 # Added armor stat
+const MAX_HEALTH: float = 150.0
 const STAND_SPEED = 5.0
 const CROUCH_SPEED = 2.0
 const JUMP_VELOCITY = 4.5
 const MOUSE_SENSITIVITY = 0.002
-const STAND_CAMERA_POS_Y = 0.0 # Adjusted for bone attachment
-const CROUCH_CAMERA_POS_Y = -0.4 # Adjusted for bone attachment
+const STAND_CAMERA_POS_Y = 0.0
+const CROUCH_CAMERA_POS_Y = -0.4
 const STAND_COLLIDER_HEIGHT = 2.0
 const CROUCH_COLLIDER_HEIGHT = 1.2
 const CROUCH_LERP_SPEED = 10.0
@@ -38,7 +40,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var buy_menu_scene: PackedScene
 @export var hud_scene: PackedScene
 @export var bullet_scene: PackedScene
-@export var death_screen_scene: PackedScene # NEW
+@export var death_screen_scene: PackedScene
 
 # --- OnReady Node References ---
 @onready var collision_shape = $CollisionShape3DHead
@@ -57,7 +59,7 @@ var is_crouching = false
 var hud: CanvasLayer
 var initial_camera_transform: Transform3D
 var ads_tween: Tween
-var is_dead: bool = false # NEW
+var is_dead: bool = false
 
 # --- Decoupled Aim Variables ---
 var _target_yaw: float = 0.0
@@ -103,9 +105,9 @@ func _ready():
 	var skeleton = model.find_child("Skeleton3D", true, false)
 	if skeleton:
 		head_attachment.skeleton = skeleton.get_path()
-		head_attachment.bone_name = "Head" # <-- CHANGE THIS if your head bone is named differently
+		head_attachment.bone_name = "Head"
 		gun_attachment.skeleton = skeleton.get_path()
-		gun_attachment.bone_name = "hand.R" # <-- CHANGE THIS if your hand bone is named differently
+		gun_attachment.bone_name = "hand.R"
 	else:
 		printerr("Player model's Skeleton3D not found!")
 
@@ -118,7 +120,8 @@ func _ready():
 		add_child(hud)
 		self.ammo_updated.connect(hud.update_ammo_display)
 		self.cash_updated.connect(hud.update_cash_display)
-		self.health_updated.connect(hud.update_health_display) # NEW
+		self.health_updated.connect(hud.update_health_display)
+		self.armor_updated.connect(hud.update_armor_display) # Connect the new armor signal
 
 	# Setup and start the buy phase
 	buy_phase_timer.wait_time = BUY_PHASE_DURATION
@@ -132,7 +135,8 @@ func _ready():
 	_equip_gun(free_pistol_data, SECONDARY_SLOT, true)
 	cash = 9000 # Set initial cash after getting the free pistol
 	cash_updated.emit(cash)
-	health_updated.emit(health) # NEW
+	health_updated.emit(health)
+	armor_updated.emit(armor) # Emit initial armor value
 
 
 func _unhandled_input(event):
@@ -163,7 +167,6 @@ func _unhandled_input(event):
 
 	if event is InputEventMouseButton and event.is_pressed():
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			# Simple toggle between the two slots
 			var next_slot = 1 - active_gun_index
 			switch_gun(next_slot)
 
@@ -174,7 +177,6 @@ func _physics_process(delta):
 
 	self.rotation.y = _target_yaw
 	camera.rotation.x = _target_pitch
-
 
 	# --- CROUCHING & COLLIDER LOGIC ---
 	var crouch_delta = delta * CROUCH_LERP_SPEED
@@ -245,13 +247,13 @@ func _toggle_ads(is_aiming: bool):
 func toggle_buy_menu():
 	if buy_menu_instance:
 		buy_menu_instance.queue_free()
-		# The instance handles setting mouse mode and nullifying its reference
 	else:
 		if buy_menu_scene:
 			buy_menu_instance = buy_menu_scene.instantiate()
 			buy_menu_instance.player_ref = self
 			buy_menu_instance.gun_purchased.connect(_on_gun_purchased)
 			buy_menu_instance.gun_sold.connect(_on_gun_sold)
+			buy_menu_instance.shield_purchased.connect(_on_shield_purchased) # Connect shield purchase signal
 			add_child(buy_menu_instance)
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
@@ -299,14 +301,24 @@ func _on_gun_sold(gun_data: GunData):
 		gun_nodes[slot_to_sell] = null
 
 	if active_gun_index == slot_to_sell:
-		var other_slot = 1 - slot_to_sell # Toggle to the other slot
+		var other_slot = 1 - slot_to_sell
 		switch_gun(other_slot)
 
 	if is_instance_valid(buy_menu_instance):
 		buy_menu_instance.refresh_display()
 
+# Added function to handle shield purchases from the buy menu
+func _on_shield_purchased(shield_data):
+	if cash >= shield_data.cost and armor < shield_data.armor_amount:
+		cash -= shield_data.cost
+		armor = shield_data.armor_amount
+		cash_updated.emit(cash)
+		armor_updated.emit(armor)
+
+		if is_instance_valid(buy_menu_instance):
+			buy_menu_instance.refresh_display()
+
 func _equip_gun(gun_data: GunData, slot: int, set_active: bool = true):
-	# Unequip and remove old gun in slot, if any
 	if is_instance_valid(gun_nodes[slot]):
 		gun_nodes[slot].queue_free()
 
@@ -329,7 +341,7 @@ func switch_gun(new_index: int):
 	if new_index == active_gun_index or not is_instance_valid(gun_inventory[new_index]):
 		return
 
-	_toggle_ads(false) # Exit ADS when switching guns
+	_toggle_ads(false)
 
 	if is_instance_valid(gun_nodes[active_gun_index]):
 		gun_nodes[active_gun_index].hide()
@@ -385,7 +397,7 @@ func reload():
 	if not current_gun_data or is_reloading or current_reserve_ammo <= 0 or current_mag_ammo == current_gun_data.mag_size:
 		return
 	is_reloading = true
-	_toggle_ads(false) # Exit ADS when reloading
+	_toggle_ads(false)
 	reload_timer.wait_time = current_gun_data.reload_time
 	reload_timer.start()
 
@@ -405,11 +417,50 @@ func set_crouch_state(new_state: bool):
 		return
 	is_crouching = new_state
 
-# --- NEW FUNCTIONS ---
+# --- MODIFIED FUNCTION ---
+# This is the new damage function with armor logic and debugging prints.
 func take_damage(damage_amount: float):
 	if is_dead: return
-	health -= damage_amount
+
+	# --- ADDED FOR DEBUGGING ---
+	print("--- Player taking damage ---")
+	print("Initial Health: ", health, " | Initial Armor: ", armor)
+	print("Incoming Damage: ", damage_amount)
+	# --- END OF DEBUGGING CODE ---
+
+	var damage_to_health = damage_amount
+	var damage_to_armor = 0.0
+
+	if armor > 0:
+		# Armor absorbs 33% of the damage
+		var absorbed_damage = damage_amount * 0.33
+		damage_to_health = damage_amount - absorbed_damage
+		damage_to_armor = absorbed_damage
+
+		# If armor can't absorb all of its share, the rest goes to health
+		if damage_to_armor > armor:
+			var overflow = damage_to_armor - armor
+			damage_to_health += overflow
+			damage_to_armor = float(armor)
+
+		armor -= int(damage_to_armor)
+
+	# --- ADDED FOR DEBUGGING ---
+	print("Damage applied to armor: ", damage_to_armor)
+	print("Damage applied to health: ", damage_to_health)
+	# --- END OF DEBUGGING CODE ---
+
+	health -= damage_to_health
+
+	# --- ADDED FOR DEBUGGING ---
+	print("Final Health: ", health, " | Final Armor: ", armor)
+	print("--------------------------")
+	# --- END OF DEBUGGING CODE ---
+
+	# Update HUD
 	health_updated.emit(health)
+	armor_updated.emit(armor)
+
 	if health <= 0:
 		die()
 
@@ -418,16 +469,13 @@ func die():
 	is_dead = true
 	player_died.emit()
 
-	# Disable player logic
 	set_physics_process(false)
 	set_process_unhandled_input(false)
 
-	# Show death screen
 	if death_screen_scene:
 		var death_screen = death_screen_scene.instantiate()
 		add_child(death_screen)
 
-	# Release mouse and hide HUD
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if is_instance_valid(hud):
 		hud.hide()

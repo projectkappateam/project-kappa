@@ -78,3 +78,11 @@ metadata/_tab_index = 2
 [node name="ARGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/TabContainer/Assault Rifles"]
 layout_mode = 2
 columns = 3
+
+[node name="Shields" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 3
+
+[node name="ShieldGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/TabContainer/Shields"]
+layout_mode = 2

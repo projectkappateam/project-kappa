@@ -3,6 +3,7 @@ extends Control
 
 signal gun_purchased(gun_data)
 signal gun_sold(gun_data)
+signal shield_purchased(shield_data)
 
 var player_ref # Player reference will be set by the player script
 
@@ -10,9 +11,11 @@ var player_ref # Player reference will be set by the player script
 @onready var pistol_grid = $"MarginContainer/VBoxContainer/TabContainer/Pistols/PistolGrid"
 @onready var smg_grid = $"MarginContainer/VBoxContainer/TabContainer/SMGs/SMGGrid"
 @onready var ar_grid = $"MarginContainer/VBoxContainer/TabContainer/Assault Rifles/ARGrid"
+@onready var shield_grid = $"MarginContainer/VBoxContainer/TabContainer/Shields/ShieldGrid"
 @onready var cash_label = $"MarginContainer/VBoxContainer/Header/HBoxContainer/CashLabel"
 
 const GUN_CARD_SCENE = preload("res://scenes/GunCard.tscn")
+const SHIELD_CARD_SCENE = preload("res://scenes/GunCard.tscn")
 
 func _ready():
 	if not is_instance_valid(player_ref):
@@ -33,16 +36,19 @@ func _notification(what):
 
 func refresh_display():
 	# Clear existing cards to prevent duplicates
-	for child in pistol_grid.get_children():
-		child.queue_free()
-	for child in smg_grid.get_children():
-		child.queue_free()
-	for child in ar_grid.get_children():
-		child.queue_free()
+	for child in pistol_grid.get_children(): child.queue_free()
+	for child in smg_grid.get_children(): child.queue_free()
+	for child in ar_grid.get_children(): child.queue_free()
+	for child in shield_grid.get_children(): child.queue_free()
 
-	populate_guns()
+	populate_menu()
 	cash_label.text = "Cash: $%d" % player_ref.cash
 
+func populate_menu():
+	# Populate Guns (existing logic)
+	populate_guns() # Keep the gun population logic in its own function
+	# Populate Shields
+	populate_shields()
 
 func populate_guns():
 	# Define where to find the grid for each category
@@ -101,6 +107,27 @@ func populate_guns():
 
 			grid.add_child(card)
 
+func populate_shields():
+	var all_shield_data = [
+		load("res://resources/shields/light_shield.tres"),
+		load("res://resources/shields/heavy_shield.tres"),
+	]
+
+	for shield_data in all_shield_data:
+		if shield_data:
+			var card = SHIELD_CARD_SCENE.instantiate()
+			card.get_node("VBoxContainer/GunNameLabel").text = shield_data.shield_name
+			card.get_node("VBoxContainer/CostLabel").text = "$%d" % shield_data.cost
+
+			var button = card.get_node("VBoxContainer/BuyButton")
+			button.text = "Buy"
+
+			if player_ref.cash < shield_data.cost or player_ref.armor >= shield_data.armor_amount:
+				button.disabled = true
+
+			button.pressed.connect(func(): _on_shield_buy_pressed(shield_data))
+
+			shield_grid.add_child(card)
 
 func _on_gun_buy_pressed(gun_data: GunData):
 	# Tell the player which gun was purchased
@@ -109,6 +136,9 @@ func _on_gun_buy_pressed(gun_data: GunData):
 
 func _on_gun_sell_pressed(gun_data: GunData):
 	gun_sold.emit(gun_data)
+
+func _on_shield_buy_pressed(shield_data: ShieldData): # ADD THIS ENTIRE FUNCTION
+	shield_purchased.emit(shield_data)
 
 
 func close_menu():

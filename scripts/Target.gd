@@ -5,7 +5,7 @@ extends CharacterBody3D
 var health: float = 150.0
 const MAX_HEALTH: float = 150.0
 const SPEED: float = 1.5
-@export var can_shoot: bool = true # NEW: Exported variable to control shooting
+@export var can_shoot: bool = true
 
 # --- Movement ---
 @export var move_range: float = 10.0 # How far it moves from its start point
@@ -46,17 +46,27 @@ func _ready():
 	start_position = global_position
 	target_position = start_position + (global_transform.basis.x * move_range)
 
-	# Find the player
+	# Try to find the player immediately on load.
+	# If not found, _physics_process will handle finding it later.
 	player_node = get_tree().get_root().find_child("Player", true, false)
 
 	# Equip gun and connect shoot timer
 	_equip_gun()
 
-	# CHANGED: Only connect the shoot timer if shooting is enabled
 	if can_shoot:
 		shoot_timer.timeout.connect(shoot)
 
 func _physics_process(delta):
+	# --- ADDED FOR ROBUSTNESS ---
+	# If the player wasn't found at startup, keep looking for it on each frame.
+	# This prevents the AI from being broken if the Target node loads before the Player.
+	if not is_instance_valid(player_node):
+		player_node = get_tree().get_root().find_child("Player", true, false)
+		# If we still can't find the player, do nothing else this frame.
+		if not is_instance_valid(player_node):
+			return
+	# --- END OF CHANGE ---
+
 	# Gravity
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -71,10 +81,18 @@ func _physics_process(delta):
 		direction *= -1
 		target_position = start_position + (global_transform.basis.x * move_range * direction)
 
-	# Look at player
-	if is_instance_valid(player_node):
-		var player_head_pos = player_node.global_position + Vector3(0, 1.7, 0)
-		look_at(player_head_pos, Vector3.UP)
+	# --- MODIFIED ROTATION LOGIC ---
+	# This section is changed to keep the enemy upright.
+	var player_head_pos = player_node.global_position + Vector3(0, 1.7, 0)
+
+	# Create a copy of the player's position but at the same height as the enemy.
+	var look_at_position_horizontal = player_head_pos
+	look_at_position_horizontal.y = global_position.y
+
+	# Now, look at that flattened position. This makes the enemy turn left/right
+	# but prevents it from tipping over backwards or forwards.
+	look_at(look_at_position_horizontal, Vector3.UP)
+	# --- END OF MODIFICATION ---
 
 	move_and_slide()
 
@@ -89,6 +107,11 @@ func shoot():
 	if not is_instance_valid(gun_node) or not is_instance_valid(player_node):
 		return
 
+	# --- ADDED FOR DEBUGGING ---
+	# This message will confirm in the output log that the timer is working and this function is being called.
+	print("Target '%s' is shooting!" % self.name)
+	# --- END OF DEBUGGING CODE ---
+
 	if not bullet_scene: return
 	var spawn_point = gun_node.find_child("BulletSpawnPoint", true, false)
 	if not spawn_point: return
@@ -101,9 +124,11 @@ func shoot():
 	var bullet_start_pos = spawn_point.global_position
 	var player_target_pos = player_node.global_position + Vector3(0, 1.5, 0) # Aim for center mass
 	var bullet_direction = bullet_start_pos.direction_to(player_target_pos)
-	var new_transform = Transform3D().looking_at(bullet_direction, Vector3.UP)
 
-	bullet_instance.global_transform = Transform3D(new_transform.basis, bullet_start_pos)
+	# Use looking_at to create a rotation basis that aims at the player's center mass.
+	# This allows the bullets to aim up/down even if the enemy's body stays upright.
+	var bullet_rotation_basis = Basis().looking_at(bullet_direction, Vector3.UP)
+	bullet_instance.global_transform = Transform3D(bullet_rotation_basis, bullet_start_pos)
 
 
 func take_damage(damage_amount: float):

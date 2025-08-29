@@ -38,6 +38,9 @@ layout_mode = 2
 [node name="HealthLabel" type="Label" parent="PanelContainer/HBoxContainer"]
 layout_mode = 2
 
+[node name="ArmorLabel" type="Label" parent="PanelContainer/HBoxContainer"]
+layout_mode = 2
+
 [node name="CurrentAmmoLabel" type="Label" parent="PanelContainer/HBoxContainer"]
 layout_mode = 2
 

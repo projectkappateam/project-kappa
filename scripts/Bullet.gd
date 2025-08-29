@@ -1,4 +1,4 @@
-# Bullet.gd
+# scripts/Bullet.gd
 extends Area3D
 
 var speed = 75.0
@@ -13,12 +13,17 @@ func _ready():
 	timer.start()
 
 func _physics_process(delta):
-	# --- REVERTED LOGIC ---
 	# Move the bullet forward based on its own local Z-axis.
-	# The player script will set this node's rotation when it's fired.
+	# The firing entity will set this node's rotation when it's fired.
 	position += -transform.basis.z * speed * delta
 
 func _on_body_entered(body):
+	# --- ADDED FOR DEBUGGING ---
+	# This line prints the name of the physics body the bullet collided with.
+	# We expect to see "Player" or "Target" here. If we don't, there might be a collision layer issue.
+	print("Bullet hit: ", body.name)
+	# --- END OF DEBUGGING CODE ---
+
 	# Check if the body we hit can take damage
 	if body.has_method("take_damage"):
 		body.take_damage(damage)

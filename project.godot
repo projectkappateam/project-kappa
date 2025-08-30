@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Open-Spectre"
-run/main_scene="uid://ijekaiechsfp"
+run/main_scene="uid://c6w2a5vj0n1h6"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 

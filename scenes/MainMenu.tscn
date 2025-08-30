@@ -1,0 +1,68 @@
+[gd_scene load_steps=2 format=3 uid="uid://c6w2a5vj0n1h6"]
+
+[ext_resource type="Script" path="res://scripts/MainMenu.gd" id="1_a7yqg"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_a7yqg")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.14902, 0.172549, 0.223529, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 50
+theme_override_constants/margin_top = 50
+theme_override_constants/margin_right = 50
+theme_override_constants/margin_bottom = 50
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 80
+text = "Project Kappa"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MenuButtons" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+theme_override_constants/separation = 15
+
+[node name="PracticeButton" type="Button" parent="MarginContainer/VBoxContainer/MenuButtons"]
+layout_mode = 2
+text = "Practice"
+
+[node name="MultiplayerButton" type="Button" parent="MarginContainer/VBoxContainer/MenuButtons"]
+layout_mode = 2
+disabled = true
+text = "Multiplayer (Coming Soon)"
+
+[node name="OptionsButton" type="Button" parent="MarginContainer/VBoxContainer/MenuButtons"]
+layout_mode = 2
+text = "Options"
+
+[node name="QuitButton" type="Button" parent="MarginContainer/VBoxContainer/MenuButtons"]
+layout_mode = 2
+text = "Quit"

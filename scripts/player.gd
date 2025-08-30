@@ -14,8 +14,8 @@ const SECONDARY_SLOT = 1
 const ADS_DURATION = 0.1
 
 # --- Player Stats ---
-@export var health: float = 150.0
-@export var armor: int = 0
+var health: float = 150.0
+var armor: int = 0
 const MAX_HEALTH: float = 150.0
 const STAND_SPEED = 5.0
 const CROUCH_SPEED = 2.0
@@ -24,7 +24,7 @@ const MOUSE_SENSITIVITY = 0.002
 const STAND_CAMERA_POS_Y = 0.0
 const CROUCH_CAMERA_POS_Y = -0.4
 const CROUCH_LERP_SPEED = 10.0
-const BUY_PHASE_DURATION = 10.0 # This can be reused or adapted for multiplayer rounds
+const BUY_PHASE_DURATION = 10.0
 
 # --- Head Bob ---
 const BOB_FREQUENCY = 0.0
@@ -35,12 +35,10 @@ var bob_time = 0.0
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # --- Exported Properties ---
+@export var buy_menu_scene: PackedScene
 @export var hud_scene: PackedScene
 @export var bullet_scene: PackedScene
-# Note: buy_menu_scene and death_screen_scene are less relevant in this simple MP setup
-@export var buy_menu_scene: PackedScene
 @export var death_screen_scene: PackedScene
-
 
 # --- OnReady Node References ---
 @onready var collision_shape = $CollisionShape3D
@@ -56,7 +54,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var ads_camera_position = $GunAttachment/GunMount/ADSCameraPosition
 
 # --- State Variables ---
-@export var is_crouching = false
+var is_crouching = false
 var hud: CanvasLayer
 var initial_camera_transform: Transform3D
 var ads_tween: Tween
@@ -77,7 +75,7 @@ var is_reloading: bool = false
 
 # --- Economy and Buy Phase ---
 var cash: int = 9000
-var is_buy_phase: bool = true # In MP, this would be managed by GameStateManager
+var is_buy_phase: bool = true
 var buy_menu_instance: Control = null
 
 var gun_scene_map = {
@@ -86,9 +84,12 @@ var gun_scene_map = {
 	"Carbon-2": "res://scenes/guns/pistols/Carbon-2.tscn",
 	"Duster-6X": "res://scenes/guns/pistols/Duster-6X.tscn",
 	"Shiv": "res://scenes/guns/pistols/Shiv.tscn",
+
 	# SMGs
 	"Buzzsaw-40": "res://scenes/guns/smgs/Buzzsaw-40.tscn",
 	"Hornet-25": "res://scenes/guns/smgs/Hornet-25.tscn",
+	"Whisper": "res://scenes/guns/smgs/Whisper.tscn",
+
 	# Assault Rifles
 	"Blackout": "res://scenes/guns/ars/Blackout.tscn",
 	"Crusader": "res://scenes/guns/ars/Crusader.tscn",
@@ -98,36 +99,6 @@ var gun_scene_map = {
 
 
 func _ready():
-	# The MultiplayerSpawner sets the node's name to the peer ID
-	name = str(multiplayer.get_unique_id())
-	get_node("/root/GameStateManager").register_player(multiplayer.get_unique_id())
-
-	if is_multiplayer_authority():
-		# This code runs ONLY for the player controlling this character
-		camera.current = true
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-
-		if hud_scene:
-			hud = hud_scene.instantiate()
-			add_child(hud)
-			self.ammo_updated.connect(hud.update_ammo_display)
-			self.cash_updated.connect(hud.update_cash_display)
-			self.health_updated.connect(hud.update_health_display)
-			self.armor_updated.connect(hud.update_armor_display)
-
-		# Initial spawn and equipment
-		var spawn_transform = get_node("/root/GameStateManager").get_spawn_point()
-		global_transform = spawn_transform
-		var free_pistol_data = load("res://resources/guns/pistols/Carbon-2.tres")
-		_equip_gun(free_pistol_data, SECONDARY_SLOT, true)
-		health_updated.emit(health)
-		armor_updated.emit(armor)
-
-	else:
-		# This code runs for all OTHER players' instances of this character
-		camera.current = false
-
-	# This code runs on all instances (local and remote)
 	await get_tree().process_frame
 	var skeleton = model.find_child("Skeleton3D", true, false)
 	if skeleton:
@@ -140,14 +111,31 @@ func _ready():
 
 	reload_timer.timeout.connect(_on_reload_finished)
 	_target_yaw = self.rotation.y
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+	if hud_scene:
+		hud = hud_scene.instantiate()
+		add_child(hud)
+		self.ammo_updated.connect(hud.update_ammo_display)
+		self.cash_updated.connect(hud.update_cash_display)
+		self.health_updated.connect(hud.update_health_display)
+		self.armor_updated.connect(hud.update_armor_display)
+
+	buy_phase_timer.wait_time = BUY_PHASE_DURATION
+	buy_phase_timer.timeout.connect(_on_buy_phase_ended)
+	buy_phase_timer.start()
+
 	initial_camera_transform = camera.transform
+
+	var free_pistol_data = load("res://resources/guns/pistols/Carbon-2.tres")
+	_equip_gun(free_pistol_data, SECONDARY_SLOT, true)
+	cash = 9000
+	cash_updated.emit(cash)
+	health_updated.emit(health)
+	armor_updated.emit(armor)
 
 
 func _unhandled_input(event):
-	# Only process input for the local player
-	if not is_multiplayer_authority():
-		return
-
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		_target_yaw -= event.relative.x * MOUSE_SENSITIVITY
 		_target_pitch -= event.relative.y * MOUSE_SENSITIVITY
@@ -164,9 +152,8 @@ func _unhandled_input(event):
 	if Input.is_action_just_released("aim"):
 		_toggle_ads(false)
 
-	# Buy menu can be adapted later for round-based games
-	# if Input.is_action_just_pressed("open_buy_menu") and is_buy_phase:
-	#	toggle_buy_menu()
+	if Input.is_action_just_pressed("open_buy_menu") and is_buy_phase:
+		toggle_buy_menu()
 
 	if Input.is_action_just_pressed("switch_primary"):
 		switch_gun(PRIMARY_SLOT)
@@ -180,17 +167,15 @@ func _unhandled_input(event):
 
 
 func _physics_process(delta):
-	# Only the local player calculates their own movement and input
-	if not is_multiplayer_authority():
-		return
+	if is_buy_phase and is_instance_valid(hud):
+		hud.update_buy_prompt(buy_phase_timer.time_left)
 
-	# Update rotation for local player
 	self.rotation.y = _target_yaw
 	camera.rotation.x = _target_pitch
 
-	# ... (All existing crouch, head-bob, gravity, and movement logic remains here)
 	var crouch_delta = delta * CROUCH_LERP_SPEED
 	var target_cam_y = STAND_CAMERA_POS_Y if not is_crouching else CROUCH_CAMERA_POS_Y
+
 	var is_moving = is_on_floor() and velocity.length() > 0.1
 	if is_moving:
 		bob_time += delta * velocity.length() * BOB_FREQUENCY
@@ -230,158 +215,6 @@ func _physics_process(delta):
 	move_and_slide()
 
 
-func shoot():
-	if is_reloading: return
-	var current_gun_data = gun_inventory[active_gun_index]
-	if not current_gun_data: return
-
-	if current_mag_ammo <= 0:
-		reload()
-		return
-
-	current_mag_ammo -= 1
-	ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
-	fire_cooldown = 1.0 / current_gun_data.fire_rate
-
-	_target_pitch += current_gun_data.recoil_climb
-	_target_pitch = clamp(_target_pitch, deg_to_rad(-90.0), deg_to_rad(90.0))
-
-	shooting_raycast.force_raycast_update()
-	if shooting_raycast.is_colliding():
-		var collider = shooting_raycast.get_collider()
-		if collider is CharacterBody3D and collider.has_method("take_damage"):
-			# Send damage request to the server (peer_id 1)
-			server_deal_damage.rpc_id(1, collider.get_path(), current_gun_data.damage, multiplayer.get_unique_id())
-
-	# Visual effects like tracers can be spawned locally by everyone
-	rpc("spawn_tracer_effect")
-
-@rpc("call_local", "any_peer", "reliable")
-func server_deal_damage(victim_path, damage, killer_id):
-	# This function will only execute on the server machine
-	if not multiplayer.is_server():
-		return
-
-	var victim_node = get_node_or_null(victim_path)
-	if victim_node:
-		# The server tells the specific victim to run the take_damage function
-		victim_node.take_damage.rpc(damage, killer_id)
-
-@rpc("any_peer", "unreliable")
-func spawn_tracer_effect():
-	if not bullet_scene: return
-	var current_gun_node = gun_nodes[active_gun_index]
-	if not is_instance_valid(current_gun_node): return
-	var spawn_point = current_gun_node.find_child("BulletSpawnPoint", true, false)
-	if not is_instance_valid(spawn_point): return
-
-	var bullet_instance = bullet_scene.instantiate()
-	get_tree().root.add_child(bullet_instance)
-
-	var start_pos = spawn_point.global_position
-	var target_pos
-
-	# For remote players, the raycast isn't synced, so we get it from the camera's forward vector
-	var ray_origin = camera.global_transform.origin
-	var ray_end = ray_origin - camera.global_transform.basis.z * 1000
-	var space_state = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_end, 1, [self])
-	var result = space_state.intersect_ray(query)
-
-	if result:
-		target_pos = result.position
-	else:
-		target_pos = ray_end
-
-	bullet_instance.fly_to(start_pos, target_pos)
-
-
-@rpc("authority", "reliable")
-func take_damage(damage_amount: float, killer_id: int):
-	# This RPC is called by the server, but runs on the client that owns this player
-	if is_dead: return
-
-	var damage_to_health = damage_amount
-	var damage_to_armor = 0.0
-
-	if armor > 0:
-		var absorbed_damage = damage_amount * 0.33
-		damage_to_health = damage_amount - absorbed_damage
-		damage_to_armor = absorbed_damage
-
-		if damage_to_armor > armor:
-			var overflow = damage_to_armor - armor
-			damage_to_health += overflow
-			damage_to_armor = float(armor)
-		armor -= int(damage_to_armor)
-
-	health -= damage_to_health
-
-	health_updated.emit(health)
-	armor_updated.emit(armor)
-
-	if health <= 0:
-		die(killer_id)
-
-func die(killer_id: int):
-	if is_dead: return
-	is_dead = true
-
-	# Only the server should tell the GameState to record the score
-	if multiplayer.is_server():
-		get_node("/root/GameStateManager").record_kill(killer_id, multiplayer.get_unique_id())
-
-	# Respawn logic
-	set_physics_process(false)
-	model.hide()
-	collision_shape.disabled = true
-
-	if is_multiplayer_authority():
-		var timer = get_tree().create_timer(3.0, true)
-		await timer.timeout
-
-		# Reset stats and respawn
-		is_dead = false
-		health = MAX_HEALTH
-		armor = 0
-		health_updated.emit(health)
-		armor_updated.emit(armor)
-
-		var spawn_transform = get_node("/root/GameStateManager").get_spawn_point()
-		global_transform = spawn_transform
-
-		set_physics_process(true)
-		model.show()
-		collision_shape.disabled = false
-
-
-# --- The rest of the functions are mostly local and don't need many changes ---
-
-func reload():
-	var current_gun_data = gun_inventory[active_gun_index]
-	if not current_gun_data or is_reloading or current_reserve_ammo <= 0 or current_mag_ammo == current_gun_data.mag_size:
-		return
-	is_reloading = true
-	_toggle_ads(false)
-	reload_timer.wait_time = current_gun_data.reload_time
-	reload_timer.start()
-
-func _on_reload_finished():
-	is_reloading = false
-	var current_gun_data = gun_inventory[active_gun_index]
-	if not current_gun_data: return
-
-	var ammo_needed = current_gun_data.mag_size - current_mag_ammo
-	var ammo_to_move = min(ammo_needed, current_reserve_ammo)
-	current_mag_ammo += ammo_to_move
-	current_reserve_ammo -= ammo_to_move
-	ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
-
-func set_crouch_state(new_state: bool):
-	if new_state == false and head_check_raycast.is_colliding():
-		return
-	is_crouching = new_state
-
 func _toggle_ads(is_aiming: bool):
 	if ads_tween and ads_tween.is_running():
 		ads_tween.kill()
@@ -396,6 +229,77 @@ func _toggle_ads(is_aiming: bool):
 		target_transform = initial_camera_transform
 
 	ads_tween.tween_property(camera, "transform", target_transform, ADS_DURATION)
+
+
+func toggle_buy_menu():
+	if buy_menu_instance:
+		buy_menu_instance.queue_free()
+	else:
+		if buy_menu_scene:
+			buy_menu_instance = buy_menu_scene.instantiate()
+			buy_menu_instance.player_ref = self
+			buy_menu_instance.gun_purchased.connect(_on_gun_purchased)
+			buy_menu_instance.gun_sold.connect(_on_gun_sold)
+			buy_menu_instance.shield_purchased.connect(_on_shield_purchased)
+			add_child(buy_menu_instance)
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+func _on_buy_phase_ended():
+	is_buy_phase = false
+	if is_instance_valid(hud):
+		hud.hide_buy_prompt()
+	if is_instance_valid(buy_menu_instance):
+		buy_menu_instance.queue_free()
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+func _on_gun_purchased(gun_data: GunData):
+	var target_slot = PRIMARY_SLOT if gun_data.category != "Pistol" else SECONDARY_SLOT
+	var current_gun_in_slot = gun_inventory[target_slot]
+
+	var refund = 0
+	if is_instance_valid(current_gun_in_slot):
+		refund = current_gun_in_slot.cost
+
+	if cash + refund < gun_data.cost: return
+
+	cash += refund
+	cash -= gun_data.cost
+	cash_updated.emit(cash)
+
+	_equip_gun(gun_data, target_slot, true)
+
+	if is_instance_valid(buy_menu_instance):
+		buy_menu_instance.refresh_display()
+
+
+func _on_gun_sold(gun_data: GunData):
+	var slot_to_sell = gun_inventory.find(gun_data)
+	if slot_to_sell == -1: return
+
+	cash += gun_data.cost
+	cash_updated.emit(cash)
+
+	gun_inventory[slot_to_sell] = null
+	if is_instance_valid(gun_nodes[slot_to_sell]):
+		gun_nodes[slot_to_sell].queue_free()
+		gun_nodes[slot_to_sell] = null
+
+	if active_gun_index == slot_to_sell:
+		var other_slot = 1 - slot_to_sell
+		switch_gun(other_slot)
+
+	if is_instance_valid(buy_menu_instance):
+		buy_menu_instance.refresh_display()
+
+func _on_shield_purchased(shield_data):
+	if cash >= shield_data.cost and armor < shield_data.armor_amount:
+		cash -= shield_data.cost
+		armor = shield_data.armor_amount
+		cash_updated.emit(cash)
+		armor_updated.emit(armor)
+
+		if is_instance_valid(buy_menu_instance):
+			buy_menu_instance.refresh_display()
 
 func _equip_gun(gun_data: GunData, slot: int, set_active: bool = true):
 	if is_instance_valid(gun_nodes[slot]):
@@ -440,3 +344,118 @@ func _update_active_gun_stats(gun_data: GunData):
 	is_reloading = false
 	fire_cooldown = 0
 	ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
+
+
+func shoot():
+	if is_reloading: return
+	var current_gun_data = gun_inventory[active_gun_index]
+	if not current_gun_data: return
+
+	if current_mag_ammo <= 0:
+		reload()
+		return
+
+	current_mag_ammo -= 1
+	ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
+	fire_cooldown = 1.0 / current_gun_data.fire_rate
+
+	_target_pitch += current_gun_data.recoil_climb
+	_target_pitch = clamp(_target_pitch, deg_to_rad(-90.0), deg_to_rad(90.0))
+
+	shooting_raycast.force_raycast_update()
+	if shooting_raycast.is_colliding():
+		var collider = shooting_raycast.get_collider()
+		if collider.has_method("take_damage"):
+			collider.take_damage(current_gun_data.damage)
+
+	if not bullet_scene: return
+	var current_gun_node = gun_nodes[active_gun_index]
+	if not is_instance_valid(current_gun_node): return
+	var spawn_point = current_gun_node.find_child("BulletSpawnPoint", true, false)
+	if not is_instance_valid(spawn_point): return
+
+	var bullet_instance = bullet_scene.instantiate()
+	get_tree().root.add_child(bullet_instance)
+
+	var start_pos = spawn_point.global_position
+	var target_pos
+	if shooting_raycast.is_colliding():
+		target_pos = shooting_raycast.get_collision_point()
+	else:
+		# --- THIS IS THE FIX ---
+		# The old code used .get_target_position(), which is a LOCAL coordinate.
+		# We need to convert that local point into a GLOBAL world coordinate.
+		# The .to_global() function does this conversion for us, ensuring the tracer
+		# always flies towards the correct point in the world, even when we don't hit anything.
+		target_pos = shooting_raycast.to_global(shooting_raycast.target_position)
+
+	# Tell the bullet to fly between these two points.
+	bullet_instance.fly_to(start_pos, target_pos)
+
+
+func reload():
+	var current_gun_data = gun_inventory[active_gun_index]
+	if not current_gun_data or is_reloading or current_reserve_ammo <= 0 or current_mag_ammo == current_gun_data.mag_size:
+		return
+	is_reloading = true
+	_toggle_ads(false)
+	reload_timer.wait_time = current_gun_data.reload_time
+	reload_timer.start()
+
+func _on_reload_finished():
+	is_reloading = false
+	var current_gun_data = gun_inventory[active_gun_index]
+	if not current_gun_data: return
+
+	var ammo_needed = current_gun_data.mag_size - current_mag_ammo
+	var ammo_to_move = min(ammo_needed, current_reserve_ammo)
+	current_mag_ammo += ammo_to_move
+	current_reserve_ammo -= ammo_to_move
+	ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
+
+func set_crouch_state(new_state: bool):
+	if new_state == false and head_check_raycast.is_colliding():
+		return
+	is_crouching = new_state
+
+func take_damage(damage_amount: float):
+	if is_dead: return
+
+	var damage_to_health = damage_amount
+	var damage_to_armor = 0.0
+
+	if armor > 0:
+		var absorbed_damage = damage_amount * 0.33
+		damage_to_health = damage_amount - absorbed_damage
+		damage_to_armor = absorbed_damage
+
+		if damage_to_armor > armor:
+			var overflow = damage_to_armor - armor
+			damage_to_health += overflow
+			damage_to_armor = float(armor)
+
+		armor -= int(damage_to_armor)
+
+	health -= damage_to_health
+
+	health_updated.emit(health)
+	armor_updated.emit(armor)
+
+	if health <= 0:
+		die()
+
+func die():
+	if is_dead: return
+	is_dead = true
+	player_died.emit()
+
+	set_physics_process(false)
+	set_process_unhandled_input(false)
+
+	if death_screen_scene:
+		var death_screen = death_screen_scene.instantiate()
+		add_child(death_screen)
+
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	if is_instance_valid(hud):
+		hud.hide()

@@ -1,0 +1,104 @@
+[gd_scene load_steps=6 format=3 uid="uid://dc4gbn3xjvslu"]
+
+[ext_resource type="Script" uid="uid://ce236wmwoe211" path="res://scripts/multiplayer_world.gd" id="1_l8ke5"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_e5uuo"]
+size = Vector3(50, 1, 50)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_e5uuo"]
+size = Vector3(50, 1, 50)
+
+[sub_resource type="BoxMesh" id="BoxMesh_obstacle"]
+size = Vector3(1, 2, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_71j4m"]
+size = Vector3(1, 1.48889, 1)
+
+[node name="The World" type="Node3D"]
+script = ExtResource("1_l8ke5")
+
+[node name="World" type="StaticBody3D" parent="."]
+
+[node name="Ground" type="MeshInstance3D" parent="World"]
+mesh = SubResource("BoxMesh_e5uuo")
+skeleton = NodePath("../..")
+
+[node name="GroundCollision" type="CollisionShape3D" parent="World"]
+shape = SubResource("BoxShape3D_e5uuo")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 22, 0)
+light_energy = 16.0
+light_indirect_energy = 6.479
+light_volumetric_fog_energy = 6.156
+omni_range = 61.0243
+omni_attenuation = 0.85
+
+[node name="Obstacles" type="Node3D" parent="."]
+
+[node name="CenterWall" type="StaticBody3D" parent="Obstacles"]
+transform = Transform3D(1.57901, 0, 0, 0, 1.60732, 0, 0, 0, 1, 0, 2.10026, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacles/CenterWall"]
+transform = Transform3D(12, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_obstacle")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacles/CenterWall"]
+transform = Transform3D(12, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.244446, 0)
+shape = SubResource("BoxShape3D_71j4m")
+
+[node name="Block1" type="StaticBody3D" parent="Obstacles"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1, 8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacles/Block1"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0)
+mesh = SubResource("BoxMesh_obstacle")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacles/Block1"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0)
+shape = SubResource("BoxShape3D_e5uuo")
+
+[node name="Block2" type="StaticBody3D" parent="Obstacles"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1, 8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacles/Block2"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0)
+mesh = SubResource("BoxMesh_obstacle")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacles/Block2"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0)
+shape = SubResource("BoxShape3D_e5uuo")
+
+[node name="SideWall_L" type="StaticBody3D" parent="Obstacles"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, -5)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacles/SideWall_L"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 8, 0, 0, 0)
+mesh = SubResource("BoxMesh_obstacle")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacles/SideWall_L"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 8, 0, 0, 0)
+shape = SubResource("BoxShape3D_e5uuo")
+
+[node name="SideWall_R" type="StaticBody3D" parent="Obstacles"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1, -5)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacles/SideWall_R"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 8, 0, 0, 0)
+mesh = SubResource("BoxMesh_obstacle")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacles/SideWall_R"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 8, 0, 0, 0)
+shape = SubResource("BoxShape3D_e5uuo")
+
+[node name="Marker3D" type="Marker3D" parent="." groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0551243, 1, 12.854)
+
+[node name="Marker3D2" type="Marker3D" parent="." groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0551243, 1, -14.9944)
+
+[node name="PlayersContainer" type="Node" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("uid://dfnvqrioyjxqu")
+spawn_path = NodePath("../PlayersContainer")

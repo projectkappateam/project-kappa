@@ -21,6 +21,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var gun_attachment = $GunAttachment
 @onready var model = $Model
 @onready var shoot_timer = $ShootTimer
+@onready var shooting_raycast = $ShootingRaycast # This will now find the node correctly.
 
 # --- Gun Mechanics ---
 var gun_node: Node3D = null
@@ -68,8 +69,8 @@ func _physics_process(delta):
 		direction *= -1
 		target_position = start_position + (global_transform.basis.x * move_range * direction)
 
-	var player_head_pos = player_node.global_position + Vector3(0, 1.7, 0)
-	var look_at_position_horizontal = player_head_pos
+	var player_pos = player_node.global_position + Vector3(0, 1.5, 0)
+	var look_at_position_horizontal = player_pos
 	look_at_position_horizontal.y = global_position.y
 	look_at(look_at_position_horizontal, Vector3.UP)
 
@@ -83,18 +84,23 @@ func _equip_gun():
 		gun_mount.add_child(gun_node)
 
 
-# --- REWORKED SHOOT FUNCTION for ENEMY ---
-# This function is updated to use the new tracer system and deal damage instantly.
 func shoot():
 	if not is_instance_valid(gun_node) or not is_instance_valid(player_node):
 		return
 
-	# Deal damage to the player instantly. This makes the enemy a "hitscan" attacker.
-	# For a more advanced game, you might use a raycast here to check for cover.
-	if player_node.has_method("take_damage"):
-		player_node.take_damage(gun_data.damage)
+	var target_pos = player_node.global_position + Vector3(0, 1.5, 0)
 
-	# Now, fire the cosmetic tracer using the new system.
+	shooting_raycast.target_position = shooting_raycast.to_local(target_pos)
+	shooting_raycast.force_raycast_update()
+
+	# Check if the raycast hits the player.
+	if shooting_raycast.is_colliding():
+		var collider = shooting_raycast.get_collider()
+		# Only deal damage if the raycast's first collision is the player.
+		if collider == player_node:
+			collider.take_damage(gun_data.damage)
+
+	# Fire the cosmetic tracer for visual feedback.
 	if not bullet_scene: return
 	var spawn_point = gun_node.find_child("BulletSpawnPoint", true, false)
 	if not is_instance_valid(spawn_point): return
@@ -102,12 +108,16 @@ func shoot():
 	var bullet_instance = bullet_scene.instantiate()
 	get_tree().root.add_child(bullet_instance)
 
-	# Determine start and end points for the tracer.
 	var start_pos = spawn_point.global_position
-	var target_pos = player_node.global_position + Vector3(0, 1.5, 0) # Aim for center mass
+	var end_pos
 
-	# Tell the bullet to fly between these two points.
-	bullet_instance.fly_to(start_pos, target_pos)
+	# The tracer flies to the actual impact point (the wall or the player).
+	if shooting_raycast.is_colliding():
+		end_pos = shooting_raycast.get_collision_point()
+	else:
+		end_pos = target_pos
+
+	bullet_instance.fly_to(start_pos, end_pos)
 
 
 func take_damage(damage_amount: float):

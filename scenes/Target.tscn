@@ -3,13 +3,12 @@
 [ext_resource type="Script" uid="uid://dibfccv3ceepc" path="res://scripts/Target.gd" id="1_ligy1"]
 [ext_resource type="PackedScene" uid="uid://daisyh88gqg4c" path="res://assets/player_character.blend" id="2_3xmu0"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ligy1"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_target"]
 radius = 0.4
-height = 2.53488
+height = 1.8
 
 [node name="Target" type="CharacterBody3D"]
 script = ExtResource("1_ligy1")
-can_shoot = false
 
 [node name="Model" parent="." instance=ExtResource("2_3xmu0")]
 transform = Transform3D(-0.5, 0, -4.37114e-08, 0, 0.5, 0, 4.37114e-08, 0, -0.5, 0, 0, 0)
@@ -31,5 +30,8 @@ one_shot = true
 autostart = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15428, 0)
-shape = SubResource("CapsuleShape3D_ligy1")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_target")
+
+[node name="ShootingRaycast" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)

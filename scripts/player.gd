@@ -52,6 +52,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var gun_attachment = $GunAttachment
 @onready var model = $Model
 @onready var ads_camera_position = $GunAttachment/GunMount/ADSCameraPosition
+@onready var multiplayer_synchronizer = $MultiplayerSynchronizer
 
 # --- State Variables ---
 var is_crouching = false
@@ -100,6 +101,7 @@ var gun_scene_map = {
 
 func _ready():
 	await get_tree().process_frame
+	set_multiplayer_authority(str(name).to_int())
 	var skeleton = model.find_child("Skeleton3D", true, false)
 	if skeleton:
 		head_attachment.skeleton = skeleton.get_path()
@@ -136,6 +138,9 @@ func _ready():
 
 
 func _unhandled_input(event):
+	if not multiplayer_synchronizer.is_multiplayer_authority():
+		return # Do not process input if this is not our character
+
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		_target_yaw -= event.relative.x * MOUSE_SENSITIVITY
 		_target_pitch -= event.relative.y * MOUSE_SENSITIVITY
@@ -167,6 +172,8 @@ func _unhandled_input(event):
 
 
 func _physics_process(delta):
+	if not multiplayer_synchronizer.is_multiplayer_authority():
+		return
 	if is_buy_phase and is_instance_valid(hud):
 		hud.update_buy_prompt(buy_phase_timer.time_left)
 
@@ -355,19 +362,37 @@ func shoot():
 		reload()
 		return
 
-	current_mag_ammo -= 1
-	ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
-	fire_cooldown = 1.0 / current_gun_data.fire_rate
+	shoot_rpc.rpc()
 
-	_target_pitch += current_gun_data.recoil_climb
-	_target_pitch = clamp(_target_pitch, deg_to_rad(-90.0), deg_to_rad(90.0))
+@rpc("any_peer", "call_local", "reliable")
+func shoot_rpc():
+	if is_reloading: return
+	var current_gun_data = gun_inventory[active_gun_index]
+	if not current_gun_data: return
 
-	shooting_raycast.force_raycast_update()
-	if shooting_raycast.is_colliding():
-		var collider = shooting_raycast.get_collider()
-		if collider.has_method("take_damage"):
-			collider.take_damage(current_gun_data.damage)
+	# On the authority's machine, perform the actual logic
+	if multiplayer_synchronizer.is_multiplayer_authority():
+		if current_mag_ammo <= 0:
+			# This check prevents a race condition where you might
+			# fire an extra bullet while reloading over the network.
+			return
 
+		current_mag_ammo -= 1
+		ammo_updated.emit(current_mag_ammo, current_reserve_ammo)
+		fire_cooldown = 1.0 / current_gun_data.fire_rate
+
+		_target_pitch += current_gun_data.recoil_climb
+		_target_pitch = clamp(_target_pitch, deg_to_rad(-90.0), deg_to_rad(90.0))
+
+		shooting_raycast.force_raycast_update()
+		if shooting_raycast.is_colliding():
+			var collider = shooting_raycast.get_collider()
+			if collider.has_method("take_damage"):
+				# IMPORTANT: Damage should be requested from the server for security
+				# For now, we'll let the client do it for simplicity.
+				collider.take_damage(current_gun_data.damage)
+
+	# Visuals (like the bullet tracer) should run on all machines.
 	if not bullet_scene: return
 	var current_gun_node = gun_nodes[active_gun_index]
 	if not is_instance_valid(current_gun_node): return
@@ -382,14 +407,8 @@ func shoot():
 	if shooting_raycast.is_colliding():
 		target_pos = shooting_raycast.get_collision_point()
 	else:
-		# --- THIS IS THE FIX ---
-		# The old code used .get_target_position(), which is a LOCAL coordinate.
-		# We need to convert that local point into a GLOBAL world coordinate.
-		# The .to_global() function does this conversion for us, ensuring the tracer
-		# always flies towards the correct point in the world, even when we don't hit anything.
 		target_pos = shooting_raycast.to_global(shooting_raycast.target_position)
 
-	# Tell the bullet to fly between these two points.
 	bullet_instance.fly_to(start_pos, target_pos)
 
 

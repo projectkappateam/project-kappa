@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c6w2a5vj0n1h6"]
 
-[ext_resource type="Script" path="res://scripts/MainMenu.gd" id="1_a7yqg"]
+[ext_resource type="Script" uid="uid://cbtbnxn4nq7ob" path="res://scripts/MainMenu.gd" id="1_a7yqg"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -56,8 +56,7 @@ text = "Practice"
 
 [node name="MultiplayerButton" type="Button" parent="MarginContainer/VBoxContainer/MenuButtons"]
 layout_mode = 2
-disabled = true
-text = "Multiplayer (Coming Soon)"
+text = "Multiplayer"
 
 [node name="OptionsButton" type="Button" parent="MarginContainer/VBoxContainer/MenuButtons"]
 layout_mode = 2

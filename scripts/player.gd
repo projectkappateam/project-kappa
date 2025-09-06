@@ -35,10 +35,10 @@ var bob_time = 0.0
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # --- Exported Properties ---
-@export var buy_menu_scene: PackedScene
-@export var hud_scene: PackedScene
-@export var bullet_scene: PackedScene
-@export var death_screen_scene: PackedScene
+var buy_menu_scene: PackedScene
+var hud_scene: PackedScene
+var bullet_scene: PackedScene
+var death_screen_scene: PackedScene
 
 # --- OnReady Node References ---
 @onready var collision_shape = $CollisionShape3D
@@ -102,6 +102,13 @@ var gun_scene_map = {
 func _ready():
 	await get_tree().process_frame
 	set_multiplayer_authority(str(name).to_int())
+
+	if not is_multiplayer_authority():
+			camera.enabled = false
+			if hud:
+				hud.queue_free() # Remove the UI for remote players
+			return
+
 	var skeleton = model.find_child("Skeleton3D", true, false)
 	if skeleton:
 		head_attachment.skeleton = skeleton.get_path()
